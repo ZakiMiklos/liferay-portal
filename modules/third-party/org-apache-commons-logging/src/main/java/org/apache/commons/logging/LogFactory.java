@@ -338,7 +338,7 @@ public abstract class LogFactory {
                 // if the user's trying to set up a custom implementation, give a clue
                 if (isDiagnosticsEnabled()) {
                     // use internal logging to issue the warning
-                    logDiagnostic("[ERROR] LogFactory: Load of custom hashtable failed");
+                    logDiagnostic("[ERROR] LogFactory: Failed to load custom hashtable");
                 } else {
                     // we *really* want this output, even if diagnostics weren't
                     // explicitly enabled by the user.
@@ -1701,3 +1701,4 @@ public abstract class LogFactory {
         }
     }
 }
+/* @generated */
