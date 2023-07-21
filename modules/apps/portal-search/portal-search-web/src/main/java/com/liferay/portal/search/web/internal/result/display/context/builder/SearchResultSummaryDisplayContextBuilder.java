@@ -353,7 +353,8 @@ public class SearchResultSummaryDisplayContextBuilder {
 		searchResultSummaryDisplayContext.setClassPK(classPK);
 
 		if (Validator.isNotNull(summary.getContent())) {
-			searchResultSummaryDisplayContext.setContent(HtmlUtil.unescape(summary.getContent()));
+			searchResultSummaryDisplayContext.setContent(
+				HtmlUtil.unescape(summary.getContent()));
 			searchResultSummaryDisplayContext.setContentVisible(true);
 		}
 
