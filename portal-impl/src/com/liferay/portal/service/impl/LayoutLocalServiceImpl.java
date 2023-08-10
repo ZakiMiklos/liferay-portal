@@ -424,7 +424,7 @@ public class LayoutLocalServiceImpl extends LayoutLocalServiceBaseImpl {
 			addLayout(
 				userId, groupId, privateLayout, parentLayoutId,
 				_classNameLocalService.getClassNameId(Layout.class),
-				layout.getPlid(), nameMap, titleMap, descriptionMap,
+				layout.getPlid(), nameMap, null, descriptionMap,
 				keywordsMap, robotsMap, type, typeSettings, true, true,
 				Collections.emptyMap(), layout.getMasterLayoutPlid(),
 				serviceContext);
