@@ -1161,7 +1161,15 @@ public class GraphQLServletExtender {
 		return graphQLInputObjectTypeBuilder.build();
 	}
 
+	private String _getGraphQLSimpleNamespace(ServletData servletData) {
+		return _getGraphQLNamespace(servletData, true);
+	}
+
 	private String _getGraphQLNamespace(ServletData servletData) {
+		return _getGraphQLNamespace(servletData, false);
+	}
+	
+	private String _getGraphQLNamespace(ServletData servletData, boolean useSimpleName) {
 		String path = servletData.getPath();
 
 		if (path == null) {
@@ -1182,7 +1190,11 @@ public class GraphQLServletExtender {
 			firstPathPart = firstPathPart.substring(0, index);
 		}
 
-		return CamelCaseUtil.toCamelCase(firstPathPart + "_" + pathParts[1]);
+		if(useSimpleName) {
+			return CamelCaseUtil.toCamelCase(firstPathPart);
+		} else {
+			return CamelCaseUtil.toCamelCase(firstPathPart + "_" + pathParts[1]);
+		}
 	}
 
 	private GraphQLObjectType _getGraphQLObjectType(
@@ -1299,6 +1311,21 @@ public class GraphQLServletExtender {
 		String version = packageNames[packageNames.length - 1];
 
 		return GetterUtil.getInteger(version.replaceAll("\\D", ""), 1);
+	}
+
+	private double _getNameSpaceVersion(String namespace) {
+		if(namespace == null) {
+			return -1.0;
+		}
+
+		double version = 1.0;
+
+		try{
+			 version = Double.parseDouble(namespace.replaceAll("_",".").replaceAll("[^0-9.]", ""));
+		} catch (NumberFormatException ex){
+		}
+
+		return version;
 	}
 
 	private boolean _isGraphQLEnabled(ServletData servletData)
@@ -1693,6 +1720,23 @@ public class GraphQLServletExtender {
 		List<ServletData> servletDatas) {
 
 		Set<String> graphQLNamespaces = new HashSet<>();
+		Map<String, String> graphQLSimpleNamespaces = new HashMap<>();
+		
+		for (ServletData servletData : servletDatas) {
+			String namespace = _getGraphQLNamespace(servletData);
+
+			if (namespace != null) {
+				String simpleGraphQLNamespace = _getGraphQLSimpleNamespace(servletData);
+				String simpleNameSpaceParent = graphQLSimpleNamespaces.get(simpleGraphQLNamespace);
+				
+				double thisVersion = _getNameSpaceVersion(namespace);
+				double previousVersion = _getNameSpaceVersion(simpleNameSpaceParent);
+				
+				if(thisVersion > previousVersion && !namespace.equals(simpleGraphQLNamespace)) {
+					graphQLSimpleNamespaces.put(simpleGraphQLNamespace, namespace);
+				}
+			}
+		}
 
 		for (ServletData servletData : servletDatas) {
 			Set<String> servletDataGraphQLNamespaces = new HashSet<>();
@@ -1700,12 +1744,16 @@ public class GraphQLServletExtender {
 			String namespace = _getGraphQLNamespace(servletData);
 
 			if (namespace != null) {
+				String simpleGraphQLNamespace = _getGraphQLSimpleNamespace(servletData);
+
 				servletDataGraphQLNamespaces.add(namespace);
+				if(graphQLSimpleNamespaces.get(simpleGraphQLNamespace) != null) {
+					servletDataGraphQLNamespaces.add(simpleGraphQLNamespace);
+				}
 			}
 
 			if (servletData.getGraphQLNamespace() != null) {
-				servletDataGraphQLNamespaces.add(
-					servletData.getGraphQLNamespace());
+				servletDataGraphQLNamespaces.add(servletData.getGraphQLNamespace());
 			}
 
 			if (servletDataGraphQLNamespaces.isEmpty()) {
@@ -1738,10 +1786,12 @@ public class GraphQLServletExtender {
 				new HashMap<>();
 
 			for (String graphQLNamespace : servletDataGraphQLNamespaces) {
+				
 				GraphQLObjectType.Builder builder =
 					new GraphQLObjectType.Builder();
 
 				String prefix = "";
+				String simpleNameSpaceParent = graphQLSimpleNamespaces.get(graphQLNamespace);
 
 				if (mutation) {
 					prefix = "Mutation";
@@ -1750,6 +1800,7 @@ public class GraphQLServletExtender {
 				builder.name(
 					prefix + StringUtil.upperCaseFirstLetter(graphQLNamespace));
 
+				
 				boolean deprecated = false;
 
 				if (StringUtil.equals(
@@ -1783,6 +1834,8 @@ public class GraphQLServletExtender {
 									_liferayMethodDataFetchingProcessor,
 									method))
 						).build());
+					
+					
 				}
 
 				graphQLObjectTypeBuilder.field(
