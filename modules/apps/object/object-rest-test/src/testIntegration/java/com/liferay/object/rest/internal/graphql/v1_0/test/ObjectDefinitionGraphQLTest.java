@@ -60,6 +60,9 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import org.skyscreamer.jsonassert.JSONAssert;
+import org.skyscreamer.jsonassert.JSONCompareMode;
+
 /**
  * @author Javier Gamarra
  */
@@ -504,7 +507,7 @@ public class ObjectDefinitionGraphQLTest {
 
 			// Empty "Accept-Language" header
 
-			Assert.assertEquals(
+			JSONAssert.assertEquals(
 				JSONUtil.putAll(
 					JSONUtil.put(
 						_OBJECT_FIELD_NAME_LONG_TEXT, "longTextEng"
@@ -517,11 +520,12 @@ public class ObjectDefinitionGraphQLTest {
 				JSONUtil.getValueAsString(
 					_invoke("", graphQLField), "JSONObject/data",
 					"JSONObject/c", "JSONObject/" + pluralName,
-					"JSONArray/items"));
+					"JSONArray/items"),
+				JSONCompareMode.NON_EXTENSIBLE);
 
 			// Nonexistent "Accept-Language" header
 
-			Assert.assertEquals(
+			JSONAssert.assertEquals(
 				JSONUtil.putAll(
 					JSONUtil.put(
 						_OBJECT_FIELD_NAME_LONG_TEXT, ""
@@ -534,11 +538,12 @@ public class ObjectDefinitionGraphQLTest {
 				JSONUtil.getValueAsString(
 					_invoke("de-DE", graphQLField), "JSONObject/data",
 					"JSONObject/c", "JSONObject/" + pluralName,
-					"JSONArray/items"));
+					"JSONArray/items"),
+				JSONCompareMode.NON_EXTENSIBLE);
 
 			// Without "Accept-Language" header
 
-			Assert.assertEquals(
+			JSONAssert.assertEquals(
 				JSONUtil.putAll(
 					JSONUtil.put(
 						_OBJECT_FIELD_NAME_LONG_TEXT, "longTextEng"
@@ -550,7 +555,8 @@ public class ObjectDefinitionGraphQLTest {
 				).toString(),
 				JSONUtil.getValueAsString(
 					_invoke(graphQLField), "JSONObject/data", "JSONObject/c",
-					"JSONObject/" + pluralName, "JSONArray/items"));
+					"JSONObject/" + pluralName, "JSONArray/items"),
+				JSONCompareMode.NON_EXTENSIBLE);
 		}
 		finally {
 			if (objectDefinition != null) {
