@@ -64,65 +64,14 @@ public class ClassNameIdCheck extends BaseCheck {
 
 			String variableName = getName(variableDefDetailAST);
 
-			if (!variableName.contains("ClassNameId") &&
-				!variableName.contains("classNameId")) {
+			if (variableName.contains("ClassNameId") ||
+				variableName.contains("classNameId")) {
 
-				continue;
-			}
-
-			List<DetailAST> variableCallerDetailASTList =
-				getVariableCallerDetailASTList(variableDefDetailAST);
-
-			if (_isAssignedInsideConstructor(variableCallerDetailASTList) ||
-				_isInsideGetterAndSetter(
-					variableCallerDetailASTList, variableName)) {
-
-				continue;
-			}
-
-			log(variableDefDetailAST, _MSG_AVOID_VARIABLE_NAME, variableName);
-		}
-	}
-
-	private boolean _isAssignedInsideConstructor(
-		List<DetailAST> variableCallerDetailASTList) {
-
-		for (DetailAST variableCallerDetailAST : variableCallerDetailASTList) {
-			if (hasParentWithTokenType(
-					variableCallerDetailAST, TokenTypes.CTOR_DEF)) {
-
-				return true;
+				log(
+					variableDefDetailAST, _MSG_AVOID_VARIABLE_NAME,
+					variableName);
 			}
 		}
-
-		return false;
-	}
-
-	private boolean _isInsideGetterAndSetter(
-		List<DetailAST> variableCallerDetailASTList, String variableName) {
-
-		String trimmedVariableName = variableName;
-
-		if (variableName.startsWith("_")) {
-			trimmedVariableName = variableName.substring(1);
-		}
-
-		for (DetailAST variableCallerDetailAST : variableCallerDetailASTList) {
-			DetailAST methodDefDetailAST = getParentWithTokenType(
-				variableCallerDetailAST, TokenTypes.METHOD_DEF);
-
-			if (methodDefDetailAST == null) {
-				continue;
-			}
-
-			String methodName = getName(methodDefDetailAST);
-
-			if (!methodName.matches("(?i)_?(get|set)" + trimmedVariableName)) {
-				return false;
-			}
-		}
-
-		return true;
 	}
 
 	private static final String _MSG_AVOID_VARIABLE_NAME =
