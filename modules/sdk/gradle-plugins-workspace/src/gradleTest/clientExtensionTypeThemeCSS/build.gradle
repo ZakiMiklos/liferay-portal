@@ -29,10 +29,10 @@ runGradleTest {
 
 			String typeSettings = String.valueOf(value.get("typeSettings"))
 
-			assert typeSettings.contains("clayURL=css/clay.css")
-			assert typeSettings.contains("mainURL=css/main.css")
 			assert typeSettings.contains("clayRTLURL=css/clay_rtl.css")
+			assert typeSettings.contains("clayURL=css/clay.css")
 			assert typeSettings.contains("mainRTLURL=css/main_rtl.css")
+			assert typeSettings.contains("mainURL=css/main.css")
 		}
 
 		_testClientExtensionConfigJSON("theme-css-without-frontend-token-definition-json") {
