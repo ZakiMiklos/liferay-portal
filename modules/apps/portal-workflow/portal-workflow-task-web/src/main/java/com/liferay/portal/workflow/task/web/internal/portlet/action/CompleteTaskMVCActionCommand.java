@@ -90,8 +90,6 @@ public class CompleteTaskMVCActionCommand
 			HttpServletRequest httpServletRequest = _getHttpServletRequest(
 				actionRequest, actionResponse);
 
-			serviceContext.setRequest(httpServletRequest);
-
 			serviceContext.setAttribute(
 				"serverName", httpServletRequest.getServerName());
 			serviceContext.setAttribute(
@@ -100,6 +98,8 @@ public class CompleteTaskMVCActionCommand
 			HttpSession httpSession = httpServletRequest.getSession();
 
 			serviceContext.setAttribute("sessionId", httpSession.getId());
+
+			serviceContext.setRequest(httpServletRequest);
 
 			workflowContext.put(
 				WorkflowConstants.CONTEXT_USER_ID,
