@@ -20,7 +20,6 @@ import com.liferay.headless.commerce.admin.catalog.resource.v1_0.SkuUnitOfMeasur
 import com.liferay.headless.commerce.core.util.LanguageUtils;
 import com.liferay.headless.commerce.core.util.ServiceContextHelper;
 import com.liferay.portal.kernel.security.permission.resource.ModelResourcePermission;
-import com.liferay.portal.kernel.util.BigDecimalUtil;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.HashMapBuilder;
 import com.liferay.portal.vulcan.dto.converter.DTOConverter;
@@ -28,6 +27,8 @@ import com.liferay.portal.vulcan.dto.converter.DefaultDTOConverterContext;
 import com.liferay.portal.vulcan.fields.NestedField;
 import com.liferay.portal.vulcan.pagination.Page;
 import com.liferay.portal.vulcan.pagination.Pagination;
+
+import java.math.BigDecimal;
 
 import java.util.Map;
 
@@ -121,7 +122,7 @@ public class SkuUnitOfMeasureResourceImpl
 				GetterUtil.get(
 					skuUnitOfMeasure.getActive(),
 					cpInstanceUnitOfMeasure.isActive()),
-				BigDecimalUtil.get(
+				(BigDecimal)GetterUtil.get(
 					skuUnitOfMeasure.getIncrementalOrderQuantity(),
 					cpInstanceUnitOfMeasure.getIncrementalOrderQuantity()),
 				cpInstanceUnitOfMeasure.getKey(),
@@ -129,16 +130,14 @@ public class SkuUnitOfMeasureResourceImpl
 				GetterUtil.get(
 					skuUnitOfMeasure.getPrecision(),
 					cpInstanceUnitOfMeasure.getPrecision()),
-				BigDecimalUtil.get(
-					skuUnitOfMeasure.getPricingQuantity(),
-					cpInstanceUnitOfMeasure.getPricingQuantity()),
+				BigDecimal.ONE,
 				GetterUtil.get(
 					skuUnitOfMeasure.getPrimary(),
 					cpInstanceUnitOfMeasure.isPrimary()),
 				GetterUtil.get(
 					skuUnitOfMeasure.getPriority(),
 					cpInstanceUnitOfMeasure.getPriority()),
-				BigDecimalUtil.get(
+				(BigDecimal)GetterUtil.get(
 					skuUnitOfMeasure.getRate(),
 					cpInstanceUnitOfMeasure.getRate()),
 				cpInstanceUnitOfMeasure.getSku());
