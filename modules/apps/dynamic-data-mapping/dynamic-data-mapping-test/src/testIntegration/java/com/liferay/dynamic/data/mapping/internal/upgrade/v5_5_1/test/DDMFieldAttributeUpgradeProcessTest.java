@@ -15,6 +15,7 @@ import com.liferay.dynamic.data.mapping.model.LocalizedValue;
 import com.liferay.dynamic.data.mapping.model.Value;
 import com.liferay.dynamic.data.mapping.service.DDMFieldLocalService;
 import com.liferay.dynamic.data.mapping.service.DDMStructureLocalService;
+import com.liferay.dynamic.data.mapping.service.persistence.DDMFieldAttributePersistence;
 import com.liferay.dynamic.data.mapping.storage.DDMFormFieldValue;
 import com.liferay.dynamic.data.mapping.storage.DDMFormValues;
 import com.liferay.dynamic.data.mapping.storage.StorageType;
@@ -39,9 +40,12 @@ import com.liferay.portal.test.log.LogCapture;
 import com.liferay.portal.test.log.LoggerTestUtil;
 import com.liferay.portal.test.rule.Inject;
 import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
+import com.liferay.portal.test.rule.PermissionCheckerMethodTestRule;
+import com.liferay.portal.test.rule.TransactionalTestRule;
 import com.liferay.portal.upgrade.registry.UpgradeStepRegistrator;
 import com.liferay.portal.upgrade.test.util.UpgradeTestUtil;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -65,7 +69,10 @@ public class DDMFieldAttributeUpgradeProcessTest {
 	@ClassRule
 	@Rule
 	public static final AggregateTestRule aggregateTestRule =
-		new LiferayIntegrationTestRule();
+		new AggregateTestRule(
+			new LiferayIntegrationTestRule(),
+			PermissionCheckerMethodTestRule.INSTANCE,
+			TransactionalTestRule.INSTANCE);
 
 	@Before
 	public void setUp() throws Exception {
@@ -84,14 +91,33 @@ public class DDMFieldAttributeUpgradeProcessTest {
 	}
 
 	@Test
-	public void testUpgradeProcess() throws Exception {
+	public void testClassUpgradeProcess() throws Exception {
 		_addDDMFormValues();
 
-		_assertCompanyId(CompanyConstants.SYSTEM);
+		List<DDMFieldAttribute> ddmFieldAttributes =
+			_ddmFieldAttributePersistence.findByStorageId(_STORAGE_ID);
+
+		List<String> ddmFieldAttributeNames = new ArrayList<>(
+			ddmFieldAttributes.size());
+
+		for (DDMFieldAttribute ddmFieldAttribute : ddmFieldAttributes) {
+			ddmFieldAttributeNames.add(ddmFieldAttribute.getAttributeName());
+
+			Assert.assertEquals(
+				CompanyConstants.SYSTEM, ddmFieldAttribute.getCompanyId());
+		}
 
 		_runUpgrade();
 
-		_assertCompanyId(_group.getCompanyId());
+		for (String ddmFieldAttributeName : ddmFieldAttributeNames) {
+			ddmFieldAttributes = _ddmFieldLocalService.getDDMFieldAttributes(
+				_STORAGE_ID, ddmFieldAttributeName);
+
+			for (DDMFieldAttribute ddmFieldAttribute : ddmFieldAttributes) {
+				Assert.assertEquals(
+					_group.getCompanyId(), ddmFieldAttribute.getCompanyId());
+			}
+		}
 	}
 
 	private void _addDDMFormValues() throws Exception {
@@ -135,20 +161,6 @@ public class DDMFieldAttributeUpgradeProcessTest {
 			ddmStructure.getStructureId(), _STORAGE_ID, ddmFormValues);
 	}
 
-	private void _assertCompanyId(long companyId) {
-		List<DDMFieldAttribute> ddmFieldAttributes;
-
-		for (String ddmFieldAttributeName : _ddmFieldAttributeNames) {
-			ddmFieldAttributes = _ddmFieldLocalService.getDDMFieldAttributes(
-				_STORAGE_ID, ddmFieldAttributeName);
-
-			for (DDMFieldAttribute ddmFieldAttribute : ddmFieldAttributes) {
-				Assert.assertEquals(
-					companyId, ddmFieldAttribute.getCompanyId());
-			}
-		}
-	}
-
 	private void _runUpgrade() throws Exception {
 		try (LogCapture logCapture = LoggerTestUtil.configureLog4JLogger(
 				_CLASS_NAME, LoggerTestUtil.OFF)) {
@@ -169,9 +181,6 @@ public class DDMFieldAttributeUpgradeProcessTest {
 
 	private static final long _STORAGE_ID = 0;
 
-	private static final List<String> _ddmFieldAttributeNames = Arrays.asList(
-		"availableLanguageIds", "defaultLanguageId");
-
 	@Inject(
 		filter = "(&(component.name=com.liferay.dynamic.data.mapping.internal.upgrade.registry.DDMServiceUpgradeStepRegistrator))"
 	)
@@ -179,6 +188,9 @@ public class DDMFieldAttributeUpgradeProcessTest {
 
 	@Inject
 	private DDM _ddm;
+
+	@Inject
+	private DDMFieldAttributePersistence _ddmFieldAttributePersistence;
 
 	@Inject
 	private DDMFieldLocalService _ddmFieldLocalService;
