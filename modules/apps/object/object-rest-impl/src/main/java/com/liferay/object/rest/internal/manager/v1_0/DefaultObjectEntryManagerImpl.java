@@ -862,6 +862,8 @@ public class DefaultObjectEntryManagerImpl
 
 		Map<String, Object> properties = objectEntry.getProperties();
 
+		long primaryKey = serviceBuilderObjectEntry.getPrimaryKey();
+
 		for (Map.Entry<String, ObjectRelationship> entry :
 				objectRelationships.entrySet()) {
 
