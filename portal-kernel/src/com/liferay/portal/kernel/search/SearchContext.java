@@ -17,7 +17,6 @@ import com.liferay.portal.kernel.util.Validator;
 
 import java.io.Serializable;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -27,7 +26,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TimeZone;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.Future;
 
 /**
  * @author Brian Wing Shun Chan
@@ -36,72 +34,29 @@ import java.util.concurrent.Future;
 public class SearchContext implements Serializable {
 
 	public static boolean isBatchMode() {
-		List<Future<?>> batchModeSyncFutures =
-			_batchModeSyncFuturesThreadLocal.get();
+		Boolean batchMode = _batchModeThreadLocal.get();
 
-		if (batchModeSyncFutures == null) {
-			return false;
+		if (batchMode == Boolean.TRUE) {
+			return true;
 		}
 
-		return true;
+		return false;
 	}
 
 	public static SafeCloseable openBatchMode() {
-		return openBatchMode(true);
-	}
-
-	public static SafeCloseable openBatchMode(boolean commit) {
 		SafeCloseable safeCloseable =
-			_batchModeSyncFuturesThreadLocal.setWithSafeCloseable(
-				new ArrayList<>());
+			_batchModeThreadLocal.setWithSafeCloseable(Boolean.TRUE);
 
 		return () -> {
-			Exception exception1 = null;
+			safeCloseable.close();
 
 			try {
-				for (Future<?> future :
-						_batchModeSyncFuturesThreadLocal.get()) {
-
-					try {
-						future.get();
-					}
-					catch (Exception exception2) {
-						if (exception1 != null) {
-							exception2.addSuppressed(exception1);
-						}
-
-						exception1 = exception2;
-					}
-				}
+				IndexWriterHelperUtil.commit();
 			}
-			finally {
-				safeCloseable.close();
-
-				try {
-					if (commit) {
-						IndexWriterHelperUtil.commit();
-					}
-				}
-				catch (SearchException searchException) {
-					if (exception1 != null) {
-						searchException.addSuppressed(exception1);
-					}
-
-					ReflectionUtil.throwException(searchException);
-				}
+			catch (SearchException searchException) {
+				ReflectionUtil.throwException(searchException);
 			}
 		};
-	}
-
-	public static void registerBatchModeSyncFuture(Future<?> future) {
-		List<Future<?>> batchModeSyncFutures =
-			_batchModeSyncFuturesThreadLocal.get();
-
-		if (batchModeSyncFutures == null) {
-			throw new IllegalStateException("Not in batch mode");
-		}
-
-		batchModeSyncFutures.add(future);
 	}
 
 	public void addFacet(Facet facet) {
@@ -492,10 +447,9 @@ public class SearchContext implements Serializable {
 		}
 	}
 
-	private static final CentralizedThreadLocal<List<Future<?>>>
-		_batchModeSyncFuturesThreadLocal = new CentralizedThreadLocal<>(
-			SearchContext.class.getName() +
-				"._batchModeSyncFuturesThreadLocal");
+	private static final CentralizedThreadLocal<Boolean> _batchModeThreadLocal =
+		new CentralizedThreadLocal<>(
+			SearchContext.class.getName() + "._batchModeThreadLocal");
 
 	private boolean _andSearch;
 	private long[] _assetCategoryIds;
