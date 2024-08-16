@@ -5,7 +5,6 @@
 
 package com.liferay.portal.search.internal.buffer;
 
-import com.liferay.object.search.StrictObjectReindexThreadLocal;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.model.BaseModel;
@@ -88,16 +87,7 @@ public class BufferedIndexerInvocationHandler implements InvocationHandler {
 		}
 
 		if (args[0] instanceof ClassedModel) {
-			if (StrictObjectReindexThreadLocal.isStrictObjectReindex()) {
-				MethodKey methodKey = new MethodKey(
-					Indexer.class, method.getName(), Object.class);
-
-				IndexerRequest indexerRequest = new IndexerRequest(
-					methodKey.getMethod(), (ClassedModel)args[0], _indexer);
-
-				_bufferRequest(indexerRequest, indexerRequestBuffer);
-			}
-			else if (Objects.equals(method.getName(), "reindex")) {
+			if (Objects.equals(method.getName(), "reindex")) {
 				MethodKey methodKey = new MethodKey(
 					Indexer.class, method.getName(), String.class, Long.TYPE);
 
