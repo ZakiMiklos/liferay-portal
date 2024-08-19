@@ -80,19 +80,7 @@ public class SkuUnitOfMeasureDTOConverter
 					() -> LanguageUtils.getLanguageIdMap(
 						cpInstanceUnitOfMeasure.getNameMap()));
 				setPrecision(cpInstanceUnitOfMeasure::getPrecision);
-				setPricingQuantity(
-					() -> {
-						BigDecimal pricingQuantity =
-							cpInstanceUnitOfMeasure.getPricingQuantity();
-
-						if (pricingQuantity == null) {
-							return null;
-						}
-
-						return pricingQuantity.setScale(
-							cpInstanceUnitOfMeasure.getPrecision(),
-							RoundingMode.HALF_UP);
-					});
+				setPricingQuantity(cpInstanceUnitOfMeasure::getPricingQuantity);
 				setPrimary(cpInstanceUnitOfMeasure::isPrimary);
 				setPriority(cpInstanceUnitOfMeasure::getPriority);
 				setPromoPrice(
