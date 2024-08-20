@@ -30,8 +30,6 @@ public interface MonitoringConfigurationManagerMBean
 
 	public boolean isMonitorPortletResourceRequest();
 
-	public boolean isMonitorServiceRequest();
-
 	public void setLevel(String namespace, String levelName);
 
 }
