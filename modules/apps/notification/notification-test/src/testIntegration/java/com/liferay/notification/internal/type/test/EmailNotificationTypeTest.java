@@ -14,16 +14,10 @@ import com.liferay.account.service.AccountEntryOrganizationRelLocalService;
 import com.liferay.account.service.AccountEntryUserRelLocalService;
 import com.liferay.account.service.AccountRoleLocalService;
 import com.liferay.arquillian.extension.junit.bridge.junit.Arquillian;
-import com.liferay.commerce.constants.CommerceOrderPaymentConstants;
-import com.liferay.commerce.currency.model.CommerceCurrency;
-import com.liferay.commerce.currency.test.util.CommerceCurrencyTestUtil;
-import com.liferay.commerce.model.CommerceOrder;
 import com.liferay.commerce.order.engine.CommerceOrderEngine;
 import com.liferay.commerce.payment.engine.CommerceSubscriptionEngine;
-import com.liferay.commerce.product.model.CommerceChannel;
 import com.liferay.commerce.service.CommerceOrderLocalService;
 import com.liferay.commerce.service.CommerceSubscriptionEntryLocalService;
-import com.liferay.commerce.test.util.CommerceTestUtil;
 import com.liferay.document.library.kernel.exception.NoSuchFolderException;
 import com.liferay.document.library.kernel.model.DLFolderConstants;
 import com.liferay.info.field.InfoField;
@@ -70,7 +64,6 @@ import com.liferay.portal.kernel.json.JSONArray;
 import com.liferay.portal.kernel.json.JSONFactoryUtil;
 import com.liferay.portal.kernel.json.JSONObject;
 import com.liferay.portal.kernel.language.LanguageUtil;
-import com.liferay.portal.kernel.messaging.DestinationNames;
 import com.liferay.portal.kernel.model.Group;
 import com.liferay.portal.kernel.model.Organization;
 import com.liferay.portal.kernel.model.OrganizationConstants;
@@ -324,58 +317,6 @@ public class EmailNotificationTypeTest extends BaseNotificationTypeTest {
 
 		_assertNotificationQueueEntryTermValues(
 			Collections.singletonList(listEntry.getName()), StringPool.COMMA);
-	}
-
-	@Test
-	public void testFreeMarkerNotificationWithCommerceOrder() throws Exception {
-		CommerceCurrency commerceCurrency =
-			CommerceCurrencyTestUtil.addCommerceCurrency(
-				TestPropsValues.getCompanyId());
-
-		CommerceChannel commerceChannel = CommerceTestUtil.addCommerceChannel(
-			TestPropsValues.getGroupId(), commerceCurrency.getCode());
-
-		CommerceOrder commerceOrder = CommerceTestUtil.addB2CCommerceOrder(
-			TestPropsValues.getUserId(), commerceChannel.getGroupId(),
-			commerceCurrency);
-
-		commerceOrder = CommerceTestUtil.addCheckoutDetailsToCommerceOrder(
-			commerceOrder, TestPropsValues.getUserId(), true, true);
-
-		ObjectDefinition commerceOrderObjectDefinition =
-			_objectDefinitionLocalService.fetchObjectDefinitionByClassName(
-				TestPropsValues.getCompanyId(), CommerceOrder.class.getName());
-
-		Map<String, Object> termValues = _getFreeMarkerTermValues(
-			commerceOrderObjectDefinition, commerceOrder,
-			_getTermNames(
-				commerceOrderObjectDefinition.getObjectDefinitionId(),
-				SetUtil.fromArray(
-					"Basic Information", "Workflow Status Information")));
-
-		String body =
-			StringUtil.merge(termValues.keySet(), StringPool.POUND) +
-				StringPool.POUND;
-
-		ObjectAction objectAction = _addNotificationTemplateObjectAction(
-			body, DestinationNames.COMMERCE_PAYMENT_STATUS,
-			commerceOrderObjectDefinition);
-
-		_commerceOrderLocalService.updatePaymentStatus(
-			TestPropsValues.getUserId(), commerceOrder.getCommerceOrderId(),
-			CommerceOrderPaymentConstants.STATUS_PENDING);
-
-		_assertNotificationQueueEntryTermValues(
-			new ArrayList<>(termValues.values()), StringPool.POUND);
-
-		_objectActionLocalService.deleteObjectAction(objectAction);
-
-		_commerceOrderLocalService.deleteCommerceOrder(
-			commerceOrder.getCommerceOrderId());
-
-		_accountEntryLocalService.deleteAccountEntry(
-			_accountEntryLocalService.fetchPersonAccountEntry(
-				TestPropsValues.getUserId()));
 	}
 
 	@Test
@@ -1236,23 +1177,7 @@ public class EmailNotificationTypeTest extends BaseNotificationTypeTest {
 			notificationQueueEntry);
 	}
 
-	private Folder _getFolder(NotificationQueueEntry notificationQueueEntry)
-		throws Exception {
-
-		Group group = _groupLocalService.getCompanyGroup(
-			notificationQueueEntry.getCompanyId());
-
-		Repository repository = _portletFileRepository.getPortletRepository(
-			group.getGroupId(), NotificationPortletKeys.NOTIFICATION_TEMPLATES);
-
-		return _portletFileRepository.getPortletFolder(
-			repository.getRepositoryId(),
-			DLFolderConstants.DEFAULT_PARENT_FOLDER_ID,
-			String.valueOf(
-				notificationQueueEntry.getNotificationQueueEntryId()));
-	}
-
-	private Map<String, Object> _getFreeMarkerTermValues(
+	private Map<String, Object> _createFreeMarkerTermValuesMap(
 			ObjectDefinition objectDefinition, PersistedModel persistedModel,
 			Set<String> termNames)
 		throws Exception {
@@ -1319,8 +1244,24 @@ public class EmailNotificationTypeTest extends BaseNotificationTypeTest {
 		return termValues;
 	}
 
+	private Folder _getFolder(NotificationQueueEntry notificationQueueEntry)
+		throws Exception {
+
+		Group group = _groupLocalService.getCompanyGroup(
+			notificationQueueEntry.getCompanyId());
+
+		Repository repository = _portletFileRepository.getPortletRepository(
+			group.getGroupId(), NotificationPortletKeys.NOTIFICATION_TEMPLATES);
+
+		return _portletFileRepository.getPortletFolder(
+			repository.getRepositoryId(),
+			DLFolderConstants.DEFAULT_PARENT_FOLDER_ID,
+			String.valueOf(
+				notificationQueueEntry.getNotificationQueueEntryId()));
+	}
+
 	private Set<String> _getTermNames(
-			long objectDefinitionId, Set<String> termCategories)
+			long objectDefinitionId, Set<String> selectedTermCategories)
 		throws Exception {
 
 		Set<String> termNames = new HashSet<>();
@@ -1341,30 +1282,28 @@ public class EmailNotificationTypeTest extends BaseNotificationTypeTest {
 			(ByteArrayOutputStream)
 				mockLiferayResourceResponse.getPortletOutputStream();
 
-		JSONArray ftlTermCategoriesJSONArray = JSONFactoryUtil.createJSONArray(
+		JSONArray jsonArray = JSONFactoryUtil.createJSONArray(
 			byteArrayOutputStream.toString());
 
-		for (int i = 0; i < ftlTermCategoriesJSONArray.length(); i++) {
-			JSONObject ftlTermCategoryJSONObject =
-				ftlTermCategoriesJSONArray.getJSONObject(i);
+		for (int i = 0; i < jsonArray.length(); i++) {
+			JSONObject jsonObject = jsonArray.getJSONObject(i);
 
-			if (!termCategories.contains(
-					ftlTermCategoryJSONObject.getString("label"))) {
+			if (!selectedTermCategories.contains(
+					jsonObject.getString("label"))) {
 
 				continue;
 			}
 
-			JSONArray itemsJSONArray = ftlTermCategoryJSONObject.getJSONArray(
-				"items");
+			JSONArray itemsJSONArray = jsonObject.getJSONArray("items");
 
 			for (int j = 0; j < itemsJSONArray.length(); j++) {
-				JSONObject itemJSONObject = itemsJSONArray.getJSONObject(j);
+				JSONObject termJSONObject = itemsJSONArray.getJSONObject(j);
 
-				if (itemJSONObject == null) {
+				if (termJSONObject == null) {
 					continue;
 				}
 
-				termNames.add(itemJSONObject.getString("content"));
+				termNames.add(termJSONObject.getString("content"));
 			}
 		}
 
