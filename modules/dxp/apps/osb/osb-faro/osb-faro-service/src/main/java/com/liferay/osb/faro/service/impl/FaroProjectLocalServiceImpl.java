@@ -355,8 +355,8 @@ public class FaroProjectLocalServiceImpl
 			String oldSubscriptionName = oldSubscriptionJSONObject.getString(
 				"name");
 
-			oldSubscriptionName = StringUtil.replace(
-				oldSubscriptionName, "LXC ", "Liferay SaaS ");
+			oldSubscriptionName = oldSubscriptionName.replace(
+				"LXC ", "Liferay SaaS ");
 
 			JSONObject newSubscriptionJSONObject =
 				_jsonFactory.createJSONObject(subscription);
