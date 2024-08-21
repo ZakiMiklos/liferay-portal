@@ -324,16 +324,31 @@ export class PageEditorPage {
 	) {
 		await this.goToSidebarTab('Page Content');
 
+		const panel = this.page.getByLabel('Page Content Panel', {
+			exact: true,
+		});
+
+		await panel.waitFor();
+
+		const content = panel.locator(
+			'.page-editor__page-contents__page-content',
+			{
+				hasText: name,
+			}
+		);
+
+		await content.hover();
+
 		if (subMenuAction) {
 			await clickAndExpectToBeVisible({
 				autoClick: false,
 				target: this.page.getByRole('menuitem', {name: action}),
-				trigger: this.page.getByTitle('Open Actions Menu'),
+				trigger: content.getByTitle('Open Actions Menu'),
 			});
 
 			await hoverAndExpectToBeVisible({
 				autoClick: true,
-				target: this.page.locator(`[data-label="${subMenuAction}"]`),
+				target: this.page.getByRole('menuitem', {name: subMenuAction}),
 				trigger: this.page.getByRole('menuitem', {name: action}),
 			});
 		}
@@ -341,7 +356,7 @@ export class PageEditorPage {
 			await clickAndExpectToBeVisible({
 				autoClick: true,
 				target: this.page.getByRole('menuitem', {name: action}),
-				trigger: this.page.getByTitle('Open Actions Menu'),
+				trigger: content.getByTitle('Open Actions Menu'),
 			});
 		}
 	}
@@ -721,20 +736,6 @@ export class PageEditorPage {
 		await this.page.getByText('Select Experience').waitFor();
 	}
 
-	async openMappingSelector() {
-		await this.selectItemMappingButton.click();
-
-		const hasRecentItems = await this.page
-			.getByRole('menuitem', {name: 'Select Item...'})
-			.isVisible();
-
-		if (hasRecentItems) {
-			await this.page
-				.getByRole('menuitem', {name: 'Select Item...'})
-				.click();
-		}
-	}
-
 	async openSpacingSelector(fragmentId: string, spacingType: SpacingType) {
 		await this.selectFragment(fragmentId);
 		await this.goToConfigurationTab('Styles');
@@ -846,27 +847,23 @@ export class PageEditorPage {
 		}
 		else {
 			const hasRecentItems = await this.page
-				.getByRole('menuitem', {name: 'Select Item...'})
+				.getByRole('presentation', {
+					name: 'Recent',
+				})
 				.isVisible();
 
 			if (hasRecentItems) {
 				await this.page
-					.getByRole('menuitem', {name: 'Select Item...'})
+					.getByRole('menuitem', {name: 'Select item'})
 					.click();
 			}
 
 			const iframe = this.page.frameLocator('iframe[title="Select"]');
 
-			await iframe.getByRole('main').waitFor();
-
-			const hasMenuBar = await iframe.getByRole('menubar').isVisible();
-
-			if (hasMenuBar) {
-				await clickAndExpectToBeVisible({
-					target: iframe.locator('.sheet-title').getByText(entity),
-					trigger: iframe.getByRole('menuitem', {name: entity}),
-				});
-			}
+			await clickAndExpectToBeVisible({
+				target: iframe.locator('.sheet-title').getByText(entity),
+				trigger: iframe.getByRole('menuitem', {name: entity}),
+			});
 
 			if (folder) {
 				await clickAndExpectToBeVisible({
@@ -877,36 +874,12 @@ export class PageEditorPage {
 				});
 			}
 
-			if (hasMenuBar) {
-				await clickAndExpectToBeHidden({
-					target: iframe.locator('.sheet-title').getByText(entity),
-					trigger: entryLocator
-						? entryLocator
-						: iframe
-								.getByRole('paragraph')
-								.filter({hasText: entry}),
-				});
-			}
-			else {
-				if (entryLocator) {
-					await entryLocator.waitFor();
-				}
-				else {
-					await iframe
-						.getByRole('paragraph')
-						.filter({hasText: entry})
-						.waitFor();
-				}
-
-				await clickAndExpectToBeHidden({
-					target: iframe.locator('.sheet-title .lfr-item-viewer'),
-					trigger: entryLocator
-						? entryLocator
-						: iframe
-								.getByRole('paragraph')
-								.filter({hasText: entry}),
-				});
-			}
+			await clickAndExpectToBeHidden({
+				target: iframe.locator('.sheet-title').getByText(entity),
+				trigger: entryLocator
+					? entryLocator
+					: iframe.getByRole('paragraph').filter({hasText: entry}),
+			});
 		}
 
 		await expect(

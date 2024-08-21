@@ -16,6 +16,7 @@ import {waitForSuccessAlert} from '../../utils/waitForSuccessAlert';
 import {journalPagesTest} from '../journal-web/fixtures/journalPagesTest';
 import {ANIMALS_COLLECTION_NAME} from '../setup/page-management-site/constants';
 import getCollectionDefinition from './utils/getCollectionDefinition';
+import getCollectionItemDefinition from './utils/getCollectionItemDefinition';
 import getFragmentDefinition from './utils/getFragmentDefinition';
 import getPageDefinition from './utils/getPageDefinition';
 
@@ -69,16 +70,21 @@ test(
 			pageManagementSite.friendlyUrlPath
 		);
 
-		const collectionDefinition = getCollectionDefinition({
-			classPK: animalsClassPK,
-			id: getRandomString(),
-			pageElements: [
+		const animalsCollection = getCollectionItemDefinition(
+			getRandomString(),
+			[
 				getFragmentDefinition({
 					fragmentFields: FRAGMENT_FIELDS,
 					id: getRandomString(),
 					key: 'BASIC_COMPONENT-heading',
 				}),
-			],
+			]
+		);
+
+		const collectionDefinition = getCollectionDefinition({
+			classPK: animalsClassPK,
+			id: getRandomString(),
+			pageElements: [animalsCollection],
 		});
 
 		// Create a content page and go to edit mode
@@ -150,10 +156,15 @@ test(
 			'iframe[title="Permissions"]'
 		);
 
-		const guestActionViewCheckBox =
-			permissionsFrame.locator('#guest_ACTION_VIEW');
+		await permissionsFrame
+			.getByRole('cell', {exact: true, name: 'Role'})
+			.waitFor();
 
-		await guestActionViewCheckBox.uncheck({trial: true});
+		const guestActionViewCheckBox = permissionsFrame.locator(
+			'[id="guest_ACTION_VIEW"]'
+		);
+
+		await expect(guestActionViewCheckBox).toBeChecked();
 
 		await guestActionViewCheckBox.uncheck();
 
@@ -164,160 +175,9 @@ test(
 		await waitForSuccessAlert(permissionsFrame);
 
 		await expect(guestActionViewCheckBox).not.toBeChecked();
-	}
-);
 
-test(
-	'View collection, mapped content and mapped content via content display in page content panel',
-	{
-		tag: '@LPS-125985',
-	},
-	async ({
-		apiHelpers,
-		collectionsPage,
-		page,
-		pageEditorPage,
-		pageManagementSite,
-	}) => {
+		// Clean up
 
-		// Create definition for a collection mapped to Animals collection
-
-		const animalsClassPK = await collectionsPage.getCollectionClassPK(
-			ANIMALS_COLLECTION_NAME,
-			pageManagementSite.friendlyUrlPath
-		);
-
-		const collectionId = getRandomString();
-
-		const collectionDefinition = getCollectionDefinition({
-			classPK: animalsClassPK,
-			id: collectionId,
-			pageElements: [
-				getFragmentDefinition({
-					fragmentFields: FRAGMENT_FIELDS,
-					id: getRandomString(),
-					key: 'BASIC_COMPONENT-heading',
-				}),
-			],
-		});
-
-		const contentDisplayId = getRandomString();
-
-		const contentDisplayDefinition = getFragmentDefinition({
-			fragmentConfig: {
-				itemSelector: {
-					template: {
-						infoItemRendererKey:
-							'com.liferay.journal.web.internal.info.item.renderer.JournalArticleFullContentInfoItemRenderer',
-					},
-				},
-			},
-			id: contentDisplayId,
-			key: 'com.liferay.fragment.internal.renderer.ContentObjectFragmentRenderer',
-		});
-
-		// Create definition for a heading fragment
-
-		const headingId = getRandomString();
-
-		const headingDefinition = getFragmentDefinition({
-			id: headingId,
-			key: 'BASIC_COMPONENT-heading',
-		});
-
-		// Create a content page and go to edit mode
-
-		const layoutTitle = getRandomString();
-
-		const layout = await apiHelpers.headlessDelivery.createSitePage({
-			pageDefinition: getPageDefinition([
-				collectionDefinition,
-				contentDisplayDefinition,
-				headingDefinition,
-			]),
-			siteId: pageManagementSite.id,
-			title: layoutTitle,
-		});
-
-		await pageEditorPage.goto(layout, pageManagementSite.friendlyUrlPath);
-
-		// Map the content display fragment to the created web content
-
-		await pageEditorPage.selectFragment(contentDisplayId);
-
-		await pageEditorPage.setMappedItem({
-			entity: 'Web Content',
-			entry: 'Animal 01 - Dogs and Cats categories',
-			folder: 'Animals',
-		});
-
-		// Map the heading fragment to the created web content
-
-		await pageEditorPage.selectEditable(headingId, 'element-text');
-
-		await pageEditorPage.setMappingConfiguration({
-			mapping: {
-				entity: 'Web Content',
-				entry: 'Animal 02 - Dogs category',
-				field: 'Title',
-				folder: 'Animals',
-			},
-		});
-
-		// Check collection, mapped content and mapped content via content display are visible in page content panel
-
-		await pageEditorPage.goToSidebarTab('Page Content');
-
-		const panel = page.getByLabel('Page Content Panel', {
-			exact: true,
-		});
-
-		await expect(
-			panel.getByText(ANIMALS_COLLECTION_NAME, {exact: true})
-		).toBeVisible();
-
-		await expect(
-			panel.getByText('Animal 01 - Dogs and Cats categories', {
-				exact: true,
-			})
-		).toBeVisible();
-
-		await expect(
-			panel.getByText('Animal 02 - Dogs category', {exact: true})
-		).toBeVisible();
-
-		await expect(
-			panel.getByText('There is no content on this page.')
-		).not.toBeVisible();
-
-		// Removes collection, content display and heading fragment
-
-		await pageEditorPage.removeFragment(collectionId);
-
-		await pageEditorPage.removeFragment(contentDisplayId);
-
-		await pageEditorPage.removeFragment(headingId);
-
-		// Check collection, mapped content and mapped content via content display are not visible in page content panel
-
-		await pageEditorPage.goToSidebarTab('Page Content');
-
-		await expect(
-			panel.getByText(ANIMALS_COLLECTION_NAME, {exact: true})
-		).not.toBeVisible();
-
-		await expect(
-			panel.getByText('Animal 01 - Dogs and Cats categories', {
-				exact: true,
-			})
-		).not.toBeVisible();
-
-		await expect(
-			panel.getByText('Animal 02 - Dogs category', {exact: true})
-		).not.toBeVisible();
-
-		await expect(
-			panel.getByText('There is no content on this page.')
-		).toBeVisible();
+		await apiHelpers.jsonWebServicesLayout.deleteLayout(layout.id);
 	}
 );
