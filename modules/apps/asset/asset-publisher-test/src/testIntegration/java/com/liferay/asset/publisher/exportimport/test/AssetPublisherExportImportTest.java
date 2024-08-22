@@ -616,6 +616,7 @@ public class AssetPublisherExportImportTest
 			stagingLayout, AssetPublisherPortletKeys.ASSET_PUBLISHER,
 			_getPreferenceMap(
 				assetListEntry.getExternalReferenceCode(),
+				RandomTestUtil.randomLong(),
 				importedGroup.getExternalReferenceCode()));
 
 		_publishLayouts(stagingGroup);
@@ -654,7 +655,7 @@ public class AssetPublisherExportImportTest
 
 		String portletId = LayoutTestUtil.addPortletToLayout(
 			stagingLayout, AssetPublisherPortletKeys.ASSET_PUBLISHER,
-			_getPreferenceMap(null, null));
+			_getPreferenceMap(null, 0, null));
 
 		_publishLayouts(stagingGroup);
 
@@ -691,7 +692,8 @@ public class AssetPublisherExportImportTest
 		String portletId = LayoutTestUtil.addPortletToLayout(
 			stagingLayout, AssetPublisherPortletKeys.ASSET_PUBLISHER,
 			_getPreferenceMap(
-				stagingAssetListEntry.getExternalReferenceCode(), null));
+				stagingAssetListEntry.getExternalReferenceCode(),
+				RandomTestUtil.randomLong(), null));
 
 		_publishLayouts(stagingGroup);
 
@@ -714,6 +716,82 @@ public class AssetPublisherExportImportTest
 		Assert.assertNull(
 			portletPreferences.getValue(
 				"assetListEntryGroupExternalReferenceCode", null));
+	}
+
+	@Override
+	@Test
+	public void testExportImportDisplayStyleFromDifferentGroup()
+		throws Exception {
+
+		long classNameId = _portal.getClassNameId(AssetEntry.class.getName());
+
+		DDMTemplate ddmTemplate = DDMTemplateTestUtil.addTemplate(
+			group.getGroupId(), classNameId, 0,
+			_portal.getClassNameId(PortletDisplayTemplate.class.getName()),
+			TemplateConstants.LANG_TYPE_FTL, RandomTestUtil.randomString(),
+			_portal.getSiteDefaultLocale(group));
+
+		PortletPreferences portletPreferences = getImportedPortletPreferences(
+			HashMapBuilder.put(
+				"displayStyle",
+				new String[] {
+					PortletDisplayTemplate.DISPLAY_STYLE_PREFIX +
+						ddmTemplate.getTemplateKey()
+				}
+			).build());
+
+		Assert.assertNotNull(
+			_ddmTemplateLocalService.getTemplate(
+				importedGroup.getGroupId(), classNameId,
+				ddmTemplate.getTemplateKey()));
+		Assert.assertEquals(
+			PortletDisplayTemplate.DISPLAY_STYLE_PREFIX +
+				ddmTemplate.getTemplateKey(),
+			portletPreferences.getValue("displayStyle", null));
+		Assert.assertNull(
+			portletPreferences.getValue(
+				"displayStyleGroupExternalReferenceCode", null));
+	}
+
+	@Override
+	@Test
+	public void testExportImportDisplayStyleFromGlobalScope() throws Exception {
+		Group companyGroup = _groupLocalService.getCompanyGroup(
+			TestPropsValues.getCompanyId());
+
+		long classNameId = _portal.getClassNameId(AssetEntry.class.getName());
+
+		DDMTemplate ddmTemplate = DDMTemplateTestUtil.addTemplate(
+			companyGroup.getGroupId(), classNameId, 0,
+			_portal.getClassNameId(PortletDisplayTemplate.class.getName()),
+			TemplateConstants.LANG_TYPE_FTL, RandomTestUtil.randomString(),
+			_portal.getSiteDefaultLocale(companyGroup));
+
+		PortletPreferences portletPreferences = getImportedPortletPreferences(
+			HashMapBuilder.put(
+				"displayStyle",
+				new String[] {
+					PortletDisplayTemplate.DISPLAY_STYLE_PREFIX +
+						ddmTemplate.getTemplateKey()
+				}
+			).put(
+				"displayStyleGroupExternalReferenceCode",
+				new String[] {companyGroup.getExternalReferenceCode()}
+			).build());
+
+		Assert.assertNull(
+			_ddmTemplateLocalService.fetchTemplate(
+				importedGroup.getGroupId(), classNameId,
+				ddmTemplate.getTemplateKey()));
+
+		Assert.assertEquals(
+			PortletDisplayTemplate.DISPLAY_STYLE_PREFIX +
+				ddmTemplate.getTemplateKey(),
+			portletPreferences.getValue("displayStyle", null));
+		Assert.assertEquals(
+			companyGroup.getExternalReferenceCode(),
+			portletPreferences.getValue(
+				"displayStyleGroupExternalReferenceCode", null));
 	}
 
 	@Test
@@ -1407,79 +1485,6 @@ public class AssetPublisherExportImportTest
 		assertAssetEntries(assetEntries, actualAssetEntries);
 	}
 
-	@Override
-	protected void testExportImportDisplayStyle(
-			long displayStyleGroupId, String scopeType)
-		throws Exception {
-
-		Group displayStyleGroup = _groupLocalService.getGroup(
-			displayStyleGroupId);
-
-		long classNameId = _portal.getClassNameId(AssetEntry.class.getName());
-
-		DDMTemplate ddmTemplate = DDMTemplateTestUtil.addTemplate(
-			displayStyleGroup.getGroupId(), classNameId, 0,
-			_portal.getClassNameId(PortletDisplayTemplate.class.getName()),
-			TemplateConstants.LANG_TYPE_FTL, RandomTestUtil.randomString(),
-			_portal.getSiteDefaultLocale(displayStyleGroup));
-
-		PortletPreferences portletPreferences = getImportedPortletPreferences(
-			HashMapBuilder.put(
-				"displayStyle",
-				new String[] {
-					PortletDisplayTemplate.DISPLAY_STYLE_PREFIX +
-						ddmTemplate.getTemplateKey()
-				}
-			).put(
-				"displayStyleGroupExternalReferenceCode",
-				() -> {
-					if (displayStyleGroup.getGroupId() == layout.getGroupId()) {
-						return null;
-					}
-
-					return new String[] {
-						displayStyleGroup.getExternalReferenceCode()
-					};
-				}
-			).put(
-				"lfrScopeLayoutUuid",
-				() -> {
-					if (scopeType.equals("layout")) {
-						return new String[] {layout.getUuid()};
-					}
-
-					return null;
-				}
-			).put(
-				"lfrScopeType", new String[] {scopeType}
-			).build());
-
-		Assert.assertEquals(
-			PortletDisplayTemplate.DISPLAY_STYLE_PREFIX +
-				ddmTemplate.getTemplateKey(),
-			portletPreferences.getValue("displayStyle", null));
-
-		DDMTemplate importedDDMTemplate =
-			_ddmTemplateLocalService.fetchTemplate(
-				layout.getGroupId(), classNameId, ddmTemplate.getTemplateKey());
-
-		String importedDisplayStyleGroupExternalReferenceCode =
-			portletPreferences.getValue(
-				"displayStyleGroupExternalReferenceCode", null);
-
-		if (displayStyleGroup.getGroupId() != layout.getGroupId()) {
-			Assert.assertNull(importedDDMTemplate);
-
-			Assert.assertEquals(
-				displayStyleGroup.getExternalReferenceCode(),
-				importedDisplayStyleGroupExternalReferenceCode);
-		}
-		else {
-			Assert.assertNotNull(importedDDMTemplate);
-			Assert.assertNull(importedDisplayStyleGroupExternalReferenceCode);
-		}
-	}
-
 	protected void testSortByAssetVocabulary(boolean globalVocabulary)
 		throws Exception {
 
@@ -1552,7 +1557,7 @@ public class AssetPublisherExportImportTest
 	}
 
 	private Map<String, String[]> _getPreferenceMap(
-		String assetListEntryExternalReferenceCode,
+		String assetListEntryExternalReferenceCode, long assetListEntryId,
 		String assetListEntryGroupExternalReferenceCode) {
 
 		return HashMapBuilder.put(
@@ -1574,6 +1579,15 @@ public class AssetPublisherExportImportTest
 				}
 
 				return new String[] {assetListEntryGroupExternalReferenceCode};
+			}
+		).put(
+			"assetListEntryId",
+			() -> {
+				if (assetListEntryId == 0) {
+					return null;
+				}
+
+				return new String[] {String.valueOf(assetListEntryId)};
 			}
 		).put(
 			"selectionStyle", new String[] {"asset-list"}
