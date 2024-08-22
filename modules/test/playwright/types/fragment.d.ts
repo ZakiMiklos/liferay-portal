@@ -3,16 +3,15 @@
  * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
-type FragmentCollection = {
-	fragmentCollectionId: string;
-	groupId: string;
-};
-
 type FragmentConfiguration = {
-	fieldSets: FragmentConfigurationFieldSet[];
+	fieldSets: FieldSet[];
 };
 
-type FragmentConfigurationField = {
+type FieldSet = {
+	fields: Field[];
+};
+
+type Field = {
 	label: string;
 	name: string;
 	type: 'itemSelector';
@@ -22,14 +21,3 @@ type FragmentConfigurationField = {
 		itemType: string;
 	};
 };
-
-type FragmentConfigurationFieldSet = {
-	fields: FragmentConfigurationField[];
-};
-
-type FragmentEntry = {
-	fragmentEntryId: string;
-	groupId: string;
-};
-
-type FragmentEntryType = 'component' | 'input';

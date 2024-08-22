@@ -24,7 +24,7 @@ export class JSONWebServicesFragmentEntryApiHelper {
 		html = '',
 		js = '',
 		name,
-		type = 'component',
+		type = FRAGMENT_ENTRY_TYPES.component,
 	}: {
 		configuration?: FragmentConfiguration;
 		css?: string;
@@ -33,7 +33,7 @@ export class JSONWebServicesFragmentEntryApiHelper {
 		html?: string;
 		js?: string;
 		name: string;
-		type?: FragmentEntryType;
+		type?: string;
 	}): Promise<FragmentEntry> {
 		const urlSearchParams = new URLSearchParams();
 
@@ -46,7 +46,7 @@ export class JSONWebServicesFragmentEntryApiHelper {
 		urlSearchParams.append('js', js);
 		urlSearchParams.append('configuration', JSON.stringify(configuration));
 		urlSearchParams.append('previewFileEntryId', '0');
-		urlSearchParams.append('type', FRAGMENT_ENTRY_TYPES[type]);
+		urlSearchParams.append('type', type);
 		urlSearchParams.append('status', '0');
 		urlSearchParams.append('serviceContext', JSON.stringify({}));
 
