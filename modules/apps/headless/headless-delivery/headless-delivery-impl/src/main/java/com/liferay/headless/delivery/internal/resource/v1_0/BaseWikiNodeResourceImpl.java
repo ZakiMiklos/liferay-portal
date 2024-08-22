@@ -1216,7 +1216,7 @@ public abstract class BaseWikiNodeResourceImpl
 	}
 
 	/**
-	 * @see com.liferay.portal.vulcan.permission.PermissionUtil#getPermissions(long, List, long, String, String[])
+	 * See {@link com.liferay.portal.vulcan.permission.PermissionUtil#getPermissions(long, List, long, String, String[])}
 	 */
 	private Collection<Permission> _getPermissions(
 			long companyId, List<ResourceAction> resourceActions,
