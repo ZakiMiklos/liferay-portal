@@ -45,6 +45,7 @@ import java.util.Map;
 
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
@@ -62,6 +63,27 @@ public class EditableValuesExportImportContentProcessorTest {
 		new AggregateTestRule(
 			new LiferayIntegrationTestRule(),
 			PermissionCheckerMethodTestRule.INSTANCE);
+
+	@BeforeClass
+	public static void setUpClass() throws Exception {
+		_configuration = JSONUtil.put(
+			"fieldSets",
+			JSONUtil.put(
+				JSONUtil.put(
+					"fields",
+					JSONUtil.put(
+						JSONUtil.put(
+							"label", "My URL"
+						).put(
+							"name", "myURL"
+						).put(
+							"type", "url"
+						))
+				).put(
+					"label", "Configuration"
+				))
+		).toString();
+	}
 
 	@Before
 	public void setUp() throws Exception {
@@ -82,24 +104,30 @@ public class EditableValuesExportImportContentProcessorTest {
 	public void testLinkedLayoutMapping() throws Exception {
 		Layout layout = LayoutTestUtil.addTypeContentLayout(_stagingGroup);
 
-		FragmentEntryLink fragmentEntryLink =
-			_addLinkMappedToLayoutFragmentEntryLink(layout);
+		FragmentEntryLink stagingFragmentEntryLink =
+			_setUpFragmentEntryLinkWithLinkMappedToLayout(layout);
 
-		_assertLayoutJSONObject(
+		_assertEquals(
 			_getEditableFragmentEntryProcessorLayoutJSONObject(
-				fragmentEntryLink),
+				stagingFragmentEntryLink),
 			layout);
+
+		ContentLayoutTestUtil.publishLayout(_draftLayout, _layout);
 
 		_publishLayouts();
 
-		_assertLayoutJSONObject(
+		FragmentEntryLink liveFragmentEntryLink =
+			_fragmentEntryLinkLocalService.getFragmentEntryLinkByUuidAndGroupId(
+				stagingFragmentEntryLink.getUuid(), _liveGroup.getGroupId());
+
+		Layout liveLayout = _layoutLocalService.getLayoutByUuidAndGroupId(
+			layout.getUuid(), _liveGroup.getGroupId(),
+			layout.isPrivateLayout());
+
+		_assertEquals(
 			_getEditableFragmentEntryProcessorLayoutJSONObject(
-				_fragmentEntryLinkLocalService.
-					getFragmentEntryLinkByUuidAndGroupId(
-						fragmentEntryLink.getUuid(), _liveGroup.getGroupId())),
-			_layoutLocalService.getLayoutByUuidAndGroupId(
-				layout.getUuid(), _liveGroup.getGroupId(),
-				layout.isPrivateLayout()));
+				liveFragmentEntryLink),
+			liveLayout);
 	}
 
 	@Test
@@ -107,23 +135,28 @@ public class EditableValuesExportImportContentProcessorTest {
 	public void testLinkedLayoutMappingWithDeletedLayout() throws Exception {
 		Layout layout = LayoutTestUtil.addTypeContentLayout(_stagingGroup);
 
-		FragmentEntryLink fragmentEntryLink =
-			_addLinkMappedToLayoutFragmentEntryLink(layout);
+		FragmentEntryLink stagingFragmentEntryLink =
+			_setUpFragmentEntryLinkWithLinkMappedToLayout(layout);
 
-		_assertLayoutJSONObject(
+		_assertEquals(
 			_getEditableFragmentEntryProcessorLayoutJSONObject(
-				fragmentEntryLink),
+				stagingFragmentEntryLink),
 			layout);
 
 		_layoutLocalService.deleteLayout(layout.getPlid());
 
+		ContentLayoutTestUtil.publishLayout(_draftLayout, _layout);
+
 		_publishLayouts();
 
-		_assertDeletedLayoutJSONObject(
+		FragmentEntryLink liveFragmentEntryLink =
+			_fragmentEntryLinkLocalService.getFragmentEntryLinkByUuidAndGroupId(
+				stagingFragmentEntryLink.getUuid(), _liveGroup.getGroupId());
+
+		_assertNotEquals(
 			_getEditableFragmentEntryProcessorLayoutJSONObject(
-				_fragmentEntryLinkLocalService.
-					getFragmentEntryLinkByUuidAndGroupId(
-						fragmentEntryLink.getUuid(), _liveGroup.getGroupId())));
+				liveFragmentEntryLink),
+			layout);
 	}
 
 	@Test
@@ -131,24 +164,30 @@ public class EditableValuesExportImportContentProcessorTest {
 	public void testURLEditableValues() throws Exception {
 		Layout layout = LayoutTestUtil.addTypeContentLayout(_stagingGroup);
 
-		FragmentEntryLink fragmentEntryLink =
-			_addUrlMappedToLayoutFragmentEntryLink(layout);
+		FragmentEntryLink stagingFragmentEntryLink =
+			_setUpFragmentEntryLinkWithUrlMappedToLayout(layout);
 
-		_assertLayoutJSONObject(
+		_assertEquals(
 			_getFreeMarkerFragmentEntryProcessorLayoutJSONObject(
-				fragmentEntryLink),
+				stagingFragmentEntryLink),
 			layout);
+
+		ContentLayoutTestUtil.publishLayout(_draftLayout, _layout);
 
 		_publishLayouts();
 
-		_assertLayoutJSONObject(
+		FragmentEntryLink liveFragmentEntryLink =
+			_fragmentEntryLinkLocalService.getFragmentEntryLinkByUuidAndGroupId(
+				stagingFragmentEntryLink.getUuid(), _liveGroup.getGroupId());
+
+		Layout liveLayout = _layoutLocalService.getLayoutByUuidAndGroupId(
+			layout.getUuid(), _liveGroup.getGroupId(),
+			layout.isPrivateLayout());
+
+		_assertEquals(
 			_getFreeMarkerFragmentEntryProcessorLayoutJSONObject(
-				_fragmentEntryLinkLocalService.
-					getFragmentEntryLinkByUuidAndGroupId(
-						fragmentEntryLink.getUuid(), _liveGroup.getGroupId())),
-			_layoutLocalService.getLayoutByUuidAndGroupId(
-				layout.getUuid(), _liveGroup.getGroupId(),
-				layout.isPrivateLayout()));
+				liveFragmentEntryLink),
+			liveLayout);
 	}
 
 	@Test
@@ -156,23 +195,28 @@ public class EditableValuesExportImportContentProcessorTest {
 	public void testURLEditableValuesWithDeletedLayout() throws Exception {
 		Layout layout = LayoutTestUtil.addTypeContentLayout(_stagingGroup);
 
-		FragmentEntryLink fragmentEntryLink =
-			_addUrlMappedToLayoutFragmentEntryLink(layout);
+		FragmentEntryLink stagingFragmentEntryLink =
+			_setUpFragmentEntryLinkWithUrlMappedToLayout(layout);
 
-		_assertLayoutJSONObject(
+		_assertEquals(
 			_getFreeMarkerFragmentEntryProcessorLayoutJSONObject(
-				fragmentEntryLink),
+				stagingFragmentEntryLink),
 			layout);
 
 		_layoutLocalService.deleteLayout(layout.getPlid());
 
+		ContentLayoutTestUtil.publishLayout(_draftLayout, _layout);
+
 		_publishLayouts();
 
-		_assertDeletedLayoutJSONObject(
+		FragmentEntryLink liveFragmentEntryLink =
+			_fragmentEntryLinkLocalService.getFragmentEntryLinkByUuidAndGroupId(
+				stagingFragmentEntryLink.getUuid(), _liveGroup.getGroupId());
+
+		_assertNotEquals(
 			_getFreeMarkerFragmentEntryProcessorLayoutJSONObject(
-				_fragmentEntryLinkLocalService.
-					getFragmentEntryLinkByUuidAndGroupId(
-						fragmentEntryLink.getUuid(), _liveGroup.getGroupId())));
+				liveFragmentEntryLink),
+			layout);
 	}
 
 	private FragmentEntry _addFragmentEntry() throws Exception {
@@ -190,41 +234,95 @@ public class EditableValuesExportImportContentProcessorTest {
 			null, TestPropsValues.getUserId(), serviceContext.getScopeGroupId(),
 			fragmentCollection.getFragmentCollectionId(), null,
 			RandomTestUtil.randomString(), StringPool.BLANK,
-			"<div class=\"fragment_1\"><a href=${configuration.myURL}>" +
-				RandomTestUtil.randomString() + "</a></div>",
-			StringPool.BLANK, false,
-			JSONUtil.put(
-				"fieldSets",
-				JSONUtil.put(
-					JSONUtil.put(
-						"fields",
-						JSONUtil.put(
-							JSONUtil.put(
-								"label", "My URL"
-							).put(
-								"name", "myURL"
-							).put(
-								"type", "url"
-							))
-					).put(
-						"label", "Configuration"
-					))
-			).toString(),
-			null, 0, false, FragmentConstants.TYPE_COMPONENT, null,
-			WorkflowConstants.STATUS_APPROVED, serviceContext);
+			"Original HTML Fragment" + _HTML, StringPool.BLANK, false,
+			_configuration, null, 0, false, FragmentConstants.TYPE_COMPONENT,
+			null, WorkflowConstants.STATUS_APPROVED, serviceContext);
 	}
 
-	private FragmentEntryLink _addLinkMappedToLayoutFragmentEntryLink(
-			Layout layout)
+	private void _assertEquals(JSONObject layoutJSONObject, Layout layout)
 		throws Exception {
 
-		FragmentEntry fragmentEntry =
-			_fragmentCollectionContributorRegistry.getFragmentEntry(
-				"BASIC_COMPONENT-heading");
+		Assert.assertEquals(
+			layout.getGroupId(), layoutJSONObject.getLong("groupId"));
+		Assert.assertEquals(
+			layout.getLayoutId(), layoutJSONObject.getLong("layoutId"));
+	}
+
+	private void _assertNotEquals(JSONObject layoutJSONObject, Layout layout) {
+		Assert.assertNotEquals(
+			layout.getGroupId(), layoutJSONObject.getLong("groupId"));
+		Assert.assertNotEquals(
+			layout.getLayoutId(), layoutJSONObject.getLong("layoutId"));
+	}
+
+	private JSONObject _getEditableFragmentEntryProcessorLayoutJSONObject(
+			FragmentEntryLink fragmentEntryLink)
+		throws Exception {
+
+		JSONObject configurationValuesJSONObject =
+			_jsonFactory.createJSONObject(
+				fragmentEntryLink.getEditableValues());
+
+		JSONObject editableValuesJSONObject =
+			configurationValuesJSONObject.getJSONObject(
+				FragmentEntryProcessorConstants.
+					KEY_EDITABLE_FRAGMENT_ENTRY_PROCESSOR);
+
+		JSONObject textJSONObject = editableValuesJSONObject.getJSONObject(
+			"element-text");
+
+		JSONObject configJSONObject = textJSONObject.getJSONObject("config");
+
+		return configJSONObject.getJSONObject("layout");
+	}
+
+	private JSONObject _getFreeMarkerFragmentEntryProcessorLayoutJSONObject(
+			FragmentEntryLink fragmentEntryLink)
+		throws Exception {
+
+		JSONObject configurationValuesJSONObject =
+			_jsonFactory.createJSONObject(
+				fragmentEntryLink.getEditableValues());
+
+		JSONObject freemarkerJSONObject =
+			configurationValuesJSONObject.getJSONObject(
+				FragmentEntryProcessorConstants.
+					KEY_FREEMARKER_FRAGMENT_ENTRY_PROCESSOR);
+
+		JSONObject myUrlJSONObject = freemarkerJSONObject.getJSONObject(
+			"myURL");
+
+		return myUrlJSONObject.getJSONObject("layout");
+	}
+
+	private void _publishLayouts() throws Exception {
+		Map<String, String[]> parameterMap =
+			ExportImportConfigurationParameterMapFactoryUtil.
+				buildParameterMap();
+
+		parameterMap.put(
+			PortletDataHandlerKeys.PORTLET_DATA,
+			new String[] {Boolean.TRUE.toString()});
+		parameterMap.put(
+			PortletDataHandlerKeys.PORTLET_DATA_ALL,
+			new String[] {Boolean.TRUE.toString()});
+
+		StagingUtil.publishLayouts(
+			TestPropsValues.getUserId(), _stagingGroup.getGroupId(),
+			_liveGroup.getGroupId(), false, parameterMap);
+	}
+
+	private FragmentEntryLink _setUpFragmentEntryLinkWithLinkMappedToLayout(
+			Layout layout)
+		throws Exception {
 
 		long segmentsExperienceId =
 			_segmentsExperienceLocalService.fetchDefaultSegmentsExperienceId(
 				_draftLayout.getPlid());
+
+		FragmentEntry fragmentEntry =
+			_fragmentCollectionContributorRegistry.getFragmentEntry(
+				"BASIC_COMPONENT-heading");
 
 		FragmentEntryLink fragmentEntryLink =
 			_fragmentEntryLinkLocalService.addFragmentEntryLink(
@@ -263,19 +361,15 @@ public class EditableValuesExportImportContentProcessorTest {
 				StringPool.BLANK, 0, fragmentEntry.getFragmentEntryKey(),
 				fragmentEntry.getType(),
 				ServiceContextTestUtil.getServiceContext(
-					_stagingGroup.getGroupId(), TestPropsValues.getUserId()));
+					_liveGroup.getGroupId(), TestPropsValues.getUserId()));
 
 		ContentLayoutTestUtil.addFragmentEntryLinkToLayout(
 			fragmentEntryLink, _draftLayout, null, 0, segmentsExperienceId);
 
-		ContentLayoutTestUtil.publishLayout(_draftLayout, _layout);
-
-		return _fragmentEntryLinkLocalService.getFragmentEntryLink(
-			_stagingGroup.getGroupId(),
-			fragmentEntryLink.getFragmentEntryLinkId(), _layout.getPlid());
+		return fragmentEntryLink;
 	}
 
-	private FragmentEntryLink _addUrlMappedToLayoutFragmentEntryLink(
+	private FragmentEntryLink _setUpFragmentEntryLinkWithUrlMappedToLayout(
 			Layout layout)
 		throws Exception {
 
@@ -285,114 +379,49 @@ public class EditableValuesExportImportContentProcessorTest {
 			_segmentsExperienceLocalService.fetchDefaultSegmentsExperienceId(
 				_draftLayout.getPlid());
 
-		FragmentEntryLink fragmentEntryLink =
+		JSONObject layoutJSONObject = JSONUtil.put(
+			FragmentEntryProcessorConstants.
+				KEY_FREEMARKER_FRAGMENT_ENTRY_PROCESSOR,
+			JSONUtil.put(
+				"myURL",
+				JSONUtil.put(
+					"layout",
+					JSONUtil.put(
+						"groupId", layout.getGroupId()
+					).put(
+						"layoutId", layout.getLayoutId()
+					).put(
+						"layoutUuid", layout.getUuid()
+					).put(
+						"privateLayout", layout.isPrivateLayout()
+					).put(
+						"title", layout.getTitle()
+					))));
+
+		FragmentEntryLink draftLayoutFragmentEntryLink =
 			_fragmentEntryLinkLocalService.addFragmentEntryLink(
 				null, TestPropsValues.getUserId(), _draftLayout.getGroupId(), 0,
 				fragmentEntry.getFragmentEntryId(), segmentsExperienceId,
 				_draftLayout.getPlid(), fragmentEntry.getCss(),
 				fragmentEntry.getHtml(), fragmentEntry.getJs(),
-				fragmentEntry.getConfiguration(),
-				JSONUtil.put(
-					FragmentEntryProcessorConstants.
-						KEY_FREEMARKER_FRAGMENT_ENTRY_PROCESSOR,
-					JSONUtil.put(
-						"myURL",
-						JSONUtil.put(
-							"layout",
-							JSONUtil.put(
-								"groupId", layout.getGroupId()
-							).put(
-								"layoutId", layout.getLayoutId()
-							).put(
-								"layoutUuid", layout.getUuid()
-							).put(
-								"privateLayout", layout.isPrivateLayout()
-							).put(
-								"title", layout.getTitle()
-							)))
-				).toString(),
+				fragmentEntry.getConfiguration(), layoutJSONObject.toString(),
 				StringPool.BLANK, 0, fragmentEntry.getFragmentEntryKey(),
 				fragmentEntry.getType(),
 				ServiceContextTestUtil.getServiceContext(
-					_stagingGroup.getGroupId(), TestPropsValues.getUserId()));
+					_liveGroup.getGroupId(), TestPropsValues.getUserId()));
 
 		ContentLayoutTestUtil.addFragmentEntryLinkToLayout(
-			fragmentEntryLink, _draftLayout, null, 0, segmentsExperienceId);
+			draftLayoutFragmentEntryLink, _draftLayout, null, 0,
+			segmentsExperienceId);
 
-		ContentLayoutTestUtil.publishLayout(_draftLayout, _layout);
-
-		return _fragmentEntryLinkLocalService.getFragmentEntryLink(
-			_stagingGroup.getGroupId(),
-			fragmentEntryLink.getFragmentEntryLinkId(), _layout.getPlid());
+		return draftLayoutFragmentEntryLink;
 	}
 
-	private void _assertDeletedLayoutJSONObject(JSONObject layoutJSONObject) {
-		Assert.assertFalse(layoutJSONObject.has("groupId"));
-		Assert.assertFalse(layoutJSONObject.has("layoutId"));
-	}
+	private static final String _HTML =
+		"<div class=\"fragment_1\"><a href=${configuration.myURL}>Click this " +
+			"link!</a></div>";
 
-	private void _assertLayoutJSONObject(JSONObject jsonObject, Layout layout) {
-		Assert.assertEquals(layout.getGroupId(), jsonObject.getLong("groupId"));
-		Assert.assertEquals(
-			layout.getLayoutId(), jsonObject.getLong("layoutId"));
-	}
-
-	private JSONObject _getEditableFragmentEntryProcessorLayoutJSONObject(
-			FragmentEntryLink fragmentEntryLink)
-		throws Exception {
-
-		JSONObject configurationValuesJSONObject =
-			_jsonFactory.createJSONObject(
-				fragmentEntryLink.getEditableValues());
-
-		JSONObject editableValuesJSONObject =
-			configurationValuesJSONObject.getJSONObject(
-				FragmentEntryProcessorConstants.
-					KEY_EDITABLE_FRAGMENT_ENTRY_PROCESSOR);
-
-		JSONObject textJSONObject = editableValuesJSONObject.getJSONObject(
-			"element-text");
-
-		JSONObject configJSONObject = textJSONObject.getJSONObject("config");
-
-		return configJSONObject.getJSONObject("layout");
-	}
-
-	private JSONObject _getFreeMarkerFragmentEntryProcessorLayoutJSONObject(
-			FragmentEntryLink fragmentEntryLink)
-		throws Exception {
-
-		JSONObject configurationValuesJSONObject =
-			_jsonFactory.createJSONObject(
-				fragmentEntryLink.getEditableValues());
-
-		JSONObject freemarkerJSONObject =
-			configurationValuesJSONObject.getJSONObject(
-				FragmentEntryProcessorConstants.
-					KEY_FREEMARKER_FRAGMENT_ENTRY_PROCESSOR);
-
-		JSONObject myURLJSONObject = freemarkerJSONObject.getJSONObject(
-			"myURL");
-
-		return myURLJSONObject.getJSONObject("layout");
-	}
-
-	private void _publishLayouts() throws Exception {
-		Map<String, String[]> parameterMap =
-			ExportImportConfigurationParameterMapFactoryUtil.
-				buildParameterMap();
-
-		parameterMap.put(
-			PortletDataHandlerKeys.PORTLET_DATA,
-			new String[] {Boolean.TRUE.toString()});
-		parameterMap.put(
-			PortletDataHandlerKeys.PORTLET_DATA_ALL,
-			new String[] {Boolean.TRUE.toString()});
-
-		StagingUtil.publishLayouts(
-			TestPropsValues.getUserId(), _stagingGroup.getGroupId(),
-			_liveGroup.getGroupId(), false, parameterMap);
-	}
+	private static String _configuration;
 
 	private Layout _draftLayout;
 
