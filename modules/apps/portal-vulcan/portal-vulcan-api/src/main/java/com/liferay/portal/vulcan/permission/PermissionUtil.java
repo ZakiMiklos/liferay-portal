@@ -67,8 +67,8 @@ public class PermissionUtil {
 	}
 
 	/**
-	 * Changes made here must also be made in
-	 * base_resource_impl.ftl#_getPermissions to ensure consistent behavior.
+	 * Any changes made here should also be reflected in the `_getPermissions`
+	 * method at `base_resource_impl.ftl` to ensure consistent behavior
 	 */
 	public static Collection<Permission> getPermissions(
 			long companyId, List<ResourceAction> resourceActions,
@@ -87,9 +87,6 @@ public class PermissionUtil {
 				companyId, resourceId, 0, resourceName,
 				String.valueOf(resourceId), false, true, true);
 		}
-
-		List<String> actionIds = TransformUtil.transform(
-			resourceActions, ResourceAction::getActionId);
 
 		Set<Role> roles = new HashSet<>();
 
@@ -124,6 +121,9 @@ public class PermissionUtil {
 						resourcePermission.getRoleId()));
 			}
 		}
+
+		List<String> actionIds = TransformUtil.transform(
+			resourceActions, ResourceAction::getActionId);
 
 		for (Role role : roles) {
 			Set<String> actionsIdsSet = new HashSet<>();
