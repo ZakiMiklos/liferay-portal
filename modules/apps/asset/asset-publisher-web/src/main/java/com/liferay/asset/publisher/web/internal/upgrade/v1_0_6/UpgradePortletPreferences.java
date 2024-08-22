@@ -38,11 +38,7 @@ public class UpgradePortletPreferences extends BaseUpgradePortletPreferences {
 	@Override
 	protected String[] getPortletIds() {
 		return new String[] {
-			AssetPublisherPortletKeys.ASSET_PUBLISHER + "_INSTANCE_%",
-			AssetPublisherPortletKeys.HIGHEST_RATED_ASSETS + "_INSTANCE_%",
-			AssetPublisherPortletKeys.MOST_VIEWED_ASSETS + "_INSTANCE_%",
-			AssetPublisherPortletKeys.RECENT_CONTENT + "_INSTANCE_%",
-			AssetPublisherPortletKeys.RELATED_ASSETS + "_INSTANCE_%"
+			AssetPublisherPortletKeys.ASSET_PUBLISHER + "_INSTANCE_%"
 		};
 	}
 
@@ -51,12 +47,6 @@ public class UpgradePortletPreferences extends BaseUpgradePortletPreferences {
 			long companyId, long ownerId, int ownerType, long plid,
 			String portletId, PortletPreferences portletPreferences)
 		throws Exception {
-
-		if (!portletId.startsWith(AssetPublisherPortletKeys.ASSET_PUBLISHER) &&
-			!portletId.startsWith(AssetPublisherPortletKeys.RECENT_CONTENT)) {
-
-			return;
-		}
 
 		String selectionStyle = GetterUtil.getString(
 			portletPreferences.getValue("selectionStyle", null),
