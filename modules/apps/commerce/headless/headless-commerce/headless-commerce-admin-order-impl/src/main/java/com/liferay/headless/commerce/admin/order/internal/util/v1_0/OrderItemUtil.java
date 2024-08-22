@@ -67,7 +67,7 @@ public class OrderItemUtil {
 			throw new CPInstanceSkuException();
 		}
 
-		CommerceOrderItem commerceOrderItem = null;
+		CommerceOrderItem commerceOrderItem;
 
 		long replacedSkuId = GetterUtil.getLong(orderItem.getReplacedSkuId());
 
@@ -281,7 +281,7 @@ public class OrderItemUtil {
 			if (replacedSku != null) {
 				replacedSkuId = replacedSku.getCPInstanceId();
 			}
-			else if (commerceOrderItem != null) {
+			else {
 				replacedSkuId = commerceOrderItem.getReplacedCPInstanceId();
 			}
 		}
@@ -345,7 +345,7 @@ public class OrderItemUtil {
 			if (commerceAddress != null) {
 				shippingAddressId = commerceAddress.getCommerceAddressId();
 			}
-			else if (commerceOrderItem != null) {
+			else {
 				shippingAddressId = commerceOrderItem.getShippingAddressId();
 			}
 		}
