@@ -336,6 +336,40 @@ public class DataSourceFactoryImpl implements DataSourceFactory {
 		}
 	}
 
+	private void _populateIBMCipherSuites(Class<?> clazz) {
+		try {
+			SSLContext sslContext = SSLContext.getDefault();
+
+			SSLEngine sslEngine = sslContext.createSSLEngine();
+
+			String[] ibmSupportedCipherSuites =
+				sslEngine.getSupportedCipherSuites();
+
+			if (ArrayUtil.isEmpty(ibmSupportedCipherSuites)) {
+				return;
+			}
+
+			Field allowedCiphersField = ReflectionUtil.getDeclaredField(
+				clazz, "ALLOWED_CIPHERS");
+
+			List<String> allowedCiphers = (List<String>)allowedCiphersField.get(
+				null);
+
+			for (String ibmSupportedCipherSuite : ibmSupportedCipherSuites) {
+				if (!allowedCiphers.contains(ibmSupportedCipherSuite)) {
+					allowedCiphers.add(ibmSupportedCipherSuite);
+				}
+			}
+		}
+		catch (Exception exception) {
+			_log.error(
+				"Unable to populate IBM JDK TLS cipher suite into MySQL " +
+					"Connector/J's allowed cipher list, consider disabling " +
+						"SSL for the connection",
+				exception);
+		}
+	}
+
 	private String _rewriteJDBCURL(String url) {
 		if (!url.startsWith("jdbc:mariadb://") &&
 			!url.startsWith("jdbc:mysql://")) {
@@ -406,40 +440,6 @@ public class DataSourceFactoryImpl implements DataSourceFactory {
 		}
 
 		return newURL;
-	}
-
-	private void _populateIBMCipherSuites(Class<?> clazz) {
-		try {
-			SSLContext sslContext = SSLContext.getDefault();
-
-			SSLEngine sslEngine = sslContext.createSSLEngine();
-
-			String[] ibmSupportedCipherSuites =
-				sslEngine.getSupportedCipherSuites();
-
-			if (ArrayUtil.isEmpty(ibmSupportedCipherSuites)) {
-				return;
-			}
-
-			Field allowedCiphersField = ReflectionUtil.getDeclaredField(
-				clazz, "ALLOWED_CIPHERS");
-
-			List<String> allowedCiphers = (List<String>)allowedCiphersField.get(
-				null);
-
-			for (String ibmSupportedCipherSuite : ibmSupportedCipherSuites) {
-				if (!allowedCiphers.contains(ibmSupportedCipherSuite)) {
-					allowedCiphers.add(ibmSupportedCipherSuite);
-				}
-			}
-		}
-		catch (Exception exception) {
-			_log.error(
-				"Unable to populate IBM JDK TLS cipher suite into MySQL " +
-					"Connector/J's allowed cipher list, consider disabling " +
-						"SSL for the connection",
-				exception);
-		}
 	}
 
 	private void _waitForJDBCConnection(Properties properties) {
