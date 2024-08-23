@@ -208,11 +208,10 @@ public class IndexerWriterImpl<T extends BaseModel<?>>
 							if (_log.isWarnEnabled()) {
 								_log.warn(
 									StringBundler.concat(
-										"Unable to reindex ",
+										"Error reindexing all ",
 										_modelSearchSettings.getClassName(),
-										" for change tracking collection ID ",
-										ctCollectionId, " and company ID ",
-										companyId),
+										" for company: ", companyId,
+										", ctCollectionId: ", ctCollectionId),
 									exception);
 							}
 						}
