@@ -238,7 +238,7 @@ public class PortalWorkspaceGitRepository extends BaseWorkspaceGitRepository {
 				"test.company.default.locale", companyDefaultLocale);
 		}
 
-		Properties buildProperties = null;
+		Properties buildProperties;
 
 		try {
 			buildProperties = JenkinsResultsParserUtil.getBuildProperties();
