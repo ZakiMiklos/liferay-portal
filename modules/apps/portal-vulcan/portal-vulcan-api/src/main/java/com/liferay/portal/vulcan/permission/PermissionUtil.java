@@ -67,8 +67,8 @@ public class PermissionUtil {
 	}
 
 	/**
-	 * Any changes made here should also be reflected in the `_getPermissions`
-	 * method at `base_resource_impl.ftl` to ensure consistent behavior
+	 * Changes made here must also be made in
+	 * base_resource_impl.ftl#_getPermissions to ensure consistent behavior.
 	 */
 	public static Collection<Permission> getPermissions(
 			long companyId, List<ResourceAction> resourceActions,
