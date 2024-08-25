@@ -101,7 +101,17 @@ public class ProductConfigurationResourceTest
 	@Override
 	@Test
 	public void testPatchProductIdConfiguration() throws Exception {
-		_testPatchProductIdConfiguration();
+		ProductConfiguration randomProductConfiguration =
+			randomProductConfiguration();
+
+		productConfigurationResource.patchProductIdConfiguration(
+			_cProduct.getCProductId(), randomProductConfiguration);
+
+		ProductConfiguration productConfiguration =
+			productConfigurationResource.getProductIdConfiguration(
+				_cProduct.getCProductId());
+
+		Assert.assertEquals(productConfiguration, randomProductConfiguration);
 	}
 
 	@Override
@@ -119,20 +129,6 @@ public class ProductConfigurationResourceTest
 				multipleOrderQuantity = BigDecimal.ONE;
 			}
 		};
-	}
-
-	private void _testPatchProductIdConfiguration() throws Exception {
-		ProductConfiguration randomProductConfiguration =
-			randomProductConfiguration();
-
-		productConfigurationResource.patchProductIdConfiguration(
-			_cProduct.getCProductId(), randomProductConfiguration);
-
-		ProductConfiguration productConfiguration =
-			productConfigurationResource.getProductIdConfiguration(
-				_cProduct.getCProductId());
-
-		Assert.assertEquals(productConfiguration, randomProductConfiguration);
 	}
 
 	@DeleteAfterTestRun
