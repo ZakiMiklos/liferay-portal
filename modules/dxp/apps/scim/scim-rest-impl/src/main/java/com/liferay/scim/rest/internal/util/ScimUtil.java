@@ -19,6 +19,8 @@ import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.model.ContactConstants;
 import com.liferay.portal.kernel.model.UserGroup;
 import com.liferay.portal.kernel.util.CalendarFactoryUtil;
+import com.liferay.portal.kernel.util.DateFormatFactoryUtil;
+import com.liferay.portal.kernel.util.FastDateFormatFactoryUtil;
 import com.liferay.portal.kernel.util.FileUtil;
 import com.liferay.portal.kernel.util.HashMapBuilder;
 import com.liferay.portal.kernel.util.ListUtil;
@@ -30,7 +32,7 @@ import com.liferay.scim.rest.internal.model.ScimUser;
 import java.io.File;
 
 import java.text.DateFormat;
-import java.text.SimpleDateFormat;
+import java.text.Format;
 
 import java.util.Calendar;
 import java.util.Collections;
@@ -339,7 +341,7 @@ public class ScimUtil {
 				"birthday",
 				_createSimpleAttribute(
 					attributeSchema.getSubAttributeSchema("birthday"),
-					_dateFormat.format(scimUser.getBirthday()))
+					_format.format(scimUser.getBirthday()))
 			).put(
 				"male",
 				_createSimpleAttribute(
@@ -387,7 +389,10 @@ public class ScimUtil {
 				return _getBirthday();
 			}
 
-			return _dateFormat.parse(simpleAttribute.getStringValue());
+			DateFormat dateFormat = DateFormatFactoryUtil.getSimpleDateFormat(
+				_PATTERN);
+
+			return dateFormat.parse(simpleAttribute.getStringValue());
 		}
 		catch (Exception exception) {
 			if (_log.isDebugEnabled()) {
@@ -482,11 +487,13 @@ public class ScimUtil {
 		}
 	}
 
+	private static final String _PATTERN = "yyyy-MM-dd'T'HH:mm:ssXX";
+
 	private static final Log _log = LogFactoryUtil.getLog(ScimUtil.class);
 
 	private static final DCLSingleton<AttributeSchema>
 		_attributeSchemaDCLSingleton = new DCLSingleton<>();
-	private static final DateFormat _dateFormat = new SimpleDateFormat(
-		"yyyy-MM-dd'T'HH:mm:ssXX");
+	private static final Format _format =
+		FastDateFormatFactoryUtil.getSimpleDateFormat(_PATTERN);
 
 }
