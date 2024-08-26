@@ -53,7 +53,7 @@ public class MonitoringInvokerPortletFactoryImpl
 			headerPortlet);
 
 		return new MonitoringInvokerPortlet(
-			invokerPortlet, _dataSampleFactory, _monitoringConfiguration);
+			_dataSampleFactory, invokerPortlet, _monitoringConfiguration);
 	}
 
 	@Override
@@ -67,7 +67,7 @@ public class MonitoringInvokerPortletFactoryImpl
 			portletModel, portlet, portletContext, invokerFilterContainer);
 
 		return new MonitoringInvokerPortlet(
-			invokerPortlet, _dataSampleFactory, _monitoringConfiguration);
+			_dataSampleFactory, invokerPortlet, _monitoringConfiguration);
 	}
 
 	@Activate

@@ -51,11 +51,11 @@ public class MonitoringInvokerPortlet
 	implements InvokerFilterContainer, InvokerPortlet {
 
 	public MonitoringInvokerPortlet(
-		InvokerPortlet invokerPortlet, DataSampleFactory dataSampleFactory,
+		DataSampleFactory dataSampleFactory, InvokerPortlet invokerPortlet,
 		MonitoringConfiguration monitoringConfiguration) {
 
-		_invokerPortlet = invokerPortlet;
 		_dataSampleFactory = dataSampleFactory;
+		_invokerPortlet = invokerPortlet;
 		_monitoringConfiguration = monitoringConfiguration;
 	}
 
