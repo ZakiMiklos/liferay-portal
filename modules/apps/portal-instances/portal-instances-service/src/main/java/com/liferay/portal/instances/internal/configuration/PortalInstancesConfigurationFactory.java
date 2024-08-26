@@ -61,6 +61,7 @@ public class PortalInstancesConfigurationFactory {
 
 		if (company == null) {
 			PortalInstances.addCompany(
+				portalInstancesConfiguration.siteInitializerKey(),
 				() -> _companyLocalService.addCompany(
 					null, webId, virtualHostname, mx, maxUsers,
 					portalInstancesConfiguration.active(),
@@ -70,8 +71,7 @@ public class PortalInstancesConfigurationFactory {
 					portalInstancesConfiguration.adminEmailAddress(),
 					portalInstancesConfiguration.adminFirstName(),
 					portalInstancesConfiguration.adminMiddleName(),
-					portalInstancesConfiguration.adminLastName()),
-				portalInstancesConfiguration.siteInitializerKey());
+					portalInstancesConfiguration.adminLastName()));
 		}
 		else {
 			if (company.getCompanyId() ==
