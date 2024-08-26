@@ -67,15 +67,15 @@ public class UpgradeDLFileEntryTypeTest {
 
 	@Test
 	public void testUpgrade() throws Exception {
-		DDMStructure productionDDMStructure;
-		DLFileEntryType productionDLFileEntryType;
+		DLFileEntryType productionDLFileEntryType = null;
 
 		try (SafeCloseable safeCloseable =
 				CTCollectionThreadLocal.setProductionModeWithSafeCloseable()) {
 
 			String fileEntryTypeKey = StringUtil.randomString();
 
-			productionDDMStructure = _addDMMStructure(fileEntryTypeKey);
+			DDMStructure productionDDMStructure = _addDMMStructure(
+				fileEntryTypeKey);
 
 			productionDLFileEntryType =
 				_dlFileEntryTypeLocalService.addFileEntryType(
@@ -92,7 +92,7 @@ public class UpgradeDLFileEntryTypeTest {
 						_group.getGroupId()));
 		}
 
-		DLFileEntryType ctCollectionDLFileEntryType;
+		DLFileEntryType ctCollectionDLFileEntryType = null;
 
 		try (SafeCloseable safeCloseable =
 				CTCollectionThreadLocal.setCTCollectionIdWithSafeCloseable(
@@ -141,10 +141,10 @@ public class UpgradeDLFileEntryTypeTest {
 
 		DDMForm ddmForm = new DDMForm();
 
-		ddmForm.setDefaultLocale(LocaleUtil.US);
 		ddmForm.addAvailableLocale(LocaleUtil.US);
 		ddmForm.addDDMFormField(
 			new DDMFormField("field", DDMFormFieldTypeConstants.TEXT));
+		ddmForm.setDefaultLocale(LocaleUtil.US);
 
 		return _ddmStructureLocalService.addStructure(
 			TestPropsValues.getUserId(), _group.getGroupId(),
