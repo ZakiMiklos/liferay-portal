@@ -71,12 +71,15 @@ import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 
+import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+
+import org.springframework.mock.web.MockHttpServletRequest;
 
 /**
  * @author Lourdes Fernández Besada
@@ -97,11 +100,34 @@ public class AddFragmentEntryLinksMVCActionCommandTest {
 
 		_company = _companyLocalService.getCompany(_group.getCompanyId());
 
-		Layout layout = LayoutTestUtil.addTypeContentLayout(_group);
+		_layout = LayoutTestUtil.addTypeContentLayout(_group);
 
-		_layout = layout.fetchDraftLayout();
+		_serviceContext = ServiceContextTestUtil.getServiceContext(
+			_group.getGroupId(), TestPropsValues.getUserId());
+
+		MockHttpServletRequest mockHttpServletRequest =
+			new MockHttpServletRequest();
+
+		mockHttpServletRequest.setAttribute(WebKeys.LAYOUT, _layout);
+
+		ThemeDisplay themeDisplay = ContentLayoutTestUtil.getThemeDisplay(
+			_company, _group, _layout);
+
+		themeDisplay.setRequest(mockHttpServletRequest);
+
+		mockHttpServletRequest.setAttribute(
+			WebKeys.THEME_DISPLAY, themeDisplay);
+
+		_serviceContext.setRequest(mockHttpServletRequest);
+
+		ServiceContextThreadLocal.pushServiceContext(_serviceContext);
 
 		_user = UserTestUtil.addCompanyAdminUser(_company);
+	}
+
+	@After
+	public void tearDown() {
+		ServiceContextThreadLocal.popServiceContext();
 	}
 
 	@Test
@@ -125,14 +151,10 @@ public class AddFragmentEntryLinksMVCActionCommandTest {
 			String html, int numberOfFragmentEntryLinks)
 		throws Exception {
 
-		ServiceContext serviceContext =
-			ServiceContextTestUtil.getServiceContext(
-				_group.getGroupId(), TestPropsValues.getUserId());
-
 		FragmentCollection fragmentCollection =
 			_fragmentCollectionLocalService.addFragmentCollection(
 				null, TestPropsValues.getUserId(), _group.getGroupId(),
-				StringUtil.randomString(), StringPool.BLANK, serviceContext);
+				StringUtil.randomString(), StringPool.BLANK, _serviceContext);
 
 		FragmentEntry fragmentEntry =
 			_fragmentEntryLocalService.addFragmentEntry(
@@ -142,7 +164,7 @@ public class AddFragmentEntryLinksMVCActionCommandTest {
 				StringPool.BLANK, html, StringPool.BLANK, false,
 				StringPool.BLANK, null, 0, false,
 				FragmentConstants.TYPE_COMPONENT, null,
-				WorkflowConstants.STATUS_APPROVED, serviceContext);
+				WorkflowConstants.STATUS_APPROVED, _serviceContext);
 
 		Layout layout = LayoutTestUtil.addTypeContentLayout(_group);
 
@@ -168,7 +190,7 @@ public class AddFragmentEntryLinksMVCActionCommandTest {
 					fragmentEntry.getCss(), fragmentEntry.getHtml(),
 					fragmentEntry.getJs(), fragmentEntry.getConfiguration(),
 					"{}", StringPool.BLANK, 0, null, fragmentEntry.getType(),
-					serviceContext);
+					_serviceContext);
 
 			layoutStructure.addFragmentStyledLayoutStructureItem(
 				fragmentEntryLink.getFragmentEntryLinkId(),
@@ -190,7 +212,7 @@ public class AddFragmentEntryLinksMVCActionCommandTest {
 			fragmentCollection.getFragmentCollectionId(),
 			RandomTestUtil.randomString(), RandomTestUtil.randomString(),
 			RandomTestUtil.randomString(), layoutStructureItemJSON, 0,
-			WorkflowConstants.STATUS_APPROVED, serviceContext);
+			WorkflowConstants.STATUS_APPROVED, _serviceContext);
 	}
 
 	private void _assertFragmentEntryLinksContent(
@@ -425,6 +447,8 @@ public class AddFragmentEntryLinksMVCActionCommandTest {
 
 	@Inject
 	private SegmentsExperienceLocalService _segmentsExperienceLocalService;
+
+	private ServiceContext _serviceContext;
 
 	@DeleteAfterTestRun
 	private User _user;
