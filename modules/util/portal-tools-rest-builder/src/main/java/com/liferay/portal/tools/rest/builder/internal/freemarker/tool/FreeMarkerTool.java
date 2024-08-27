@@ -282,22 +282,28 @@ public class FreeMarkerTool {
 
 		Schema schema = schemas.get(schemaName);
 
-		if (schema != null) {
-			List<Schema> allOfSchemas = schema.getAllOfSchemas();
+		if (schema == null) {
+			return null;
+		}
 
-			if (allOfSchemas != null) {
-				for (Schema allOfSchema : allOfSchemas) {
-					if (allOfSchema.getReference() != null) {
-						String referenceName = getReferenceName(
-							allOfSchema.getReference());
+		List<Schema> allOfSchemas = schema.getAllOfSchemas();
 
-						allOfSchema = schemas.get(referenceName);
+		if (allOfSchemas == null) {
+			return null;
+		}
 
-						if (allOfSchema.getDiscriminator() != null) {
-							return referenceName;
-						}
-					}
-				}
+		for (Schema allOfSchema : allOfSchemas) {
+			if (allOfSchema.getReference() == null) {
+				continue;
+			}
+
+			String referenceName = getReferenceName(
+				allOfSchema.getReference());
+
+			allOfSchema = schemas.get(referenceName);
+
+			if (allOfSchema.getDiscriminator() != null) {
+				return referenceName;
 			}
 		}
 
