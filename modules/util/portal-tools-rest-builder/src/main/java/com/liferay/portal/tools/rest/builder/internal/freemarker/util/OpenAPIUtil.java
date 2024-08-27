@@ -207,26 +207,30 @@ public class OpenAPIUtil {
 				}
 
 				if (propertySchemas == null) {
-					boolean polymorphicChild = false;
-
 					List<Schema> allOfSchemas = schema.getAllOfSchemas();
 
-					if (allOfSchemas != null) {
-						for (Schema allOfSchema : allOfSchemas) {
-							if (allOfSchema.getReference() != null) {
-								Schema referenceSchema = allSchemas.get(
-									OpenAPIParserUtil.getReferenceName(
-										allOfSchema.getReference()));
+					if (allOfSchemas == null) {
+						continue;
+					}
 
-								if (referenceSchema.getDiscriminator() !=
-										null) {
+					boolean polymorphicChild = false;
 
-									polymorphicChild = true;
-
-									break;
-								}
-							}
+					for (Schema allOfSchema : allOfSchemas) {
+						if (allOfSchema.getReference() == null) {
+							continue;
 						}
+
+						Schema referenceSchema = allSchemas.get(
+							OpenAPIParserUtil.getReferenceName(
+								allOfSchema.getReference()));
+
+						if (referenceSchema.getDiscriminator() == null) {
+							continue;
+						}
+
+						polymorphicChild = true;
+
+						break;
 					}
 
 					if (!polymorphicChild) {
