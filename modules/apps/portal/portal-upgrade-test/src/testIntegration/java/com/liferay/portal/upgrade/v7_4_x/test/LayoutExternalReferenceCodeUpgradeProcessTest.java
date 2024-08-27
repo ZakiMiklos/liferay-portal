@@ -13,6 +13,7 @@ import com.liferay.portal.kernel.model.LayoutConstants;
 import com.liferay.portal.kernel.service.LayoutLocalService;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
 import com.liferay.portal.kernel.test.util.TestPropsValues;
+import com.liferay.portal.kernel.upgrade.UpgradeProcess;
 import com.liferay.portal.kernel.version.Version;
 import com.liferay.portal.test.rule.Inject;
 import com.liferay.portal.upgrade.registry.UpgradeStepRegistrator;
@@ -60,7 +61,7 @@ public class LayoutExternalReferenceCodeUpgradeProcessTest
 	}
 
 	@Override
-	protected LayoutExternalReferenceCodeUpgradeProcess getUpgradeProcess() {
+	protected UpgradeProcess getUpgradeProcess() {
 		return new LayoutExternalReferenceCodeUpgradeProcess();
 	}
 

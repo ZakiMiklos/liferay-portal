@@ -16,6 +16,7 @@ import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.model.ExternalReferenceCodeModel;
 import com.liferay.portal.kernel.test.util.ServiceContextTestUtil;
 import com.liferay.portal.kernel.test.util.TestPropsValues;
+import com.liferay.portal.kernel.upgrade.UpgradeProcess;
 import com.liferay.portal.kernel.version.Version;
 import com.liferay.portal.test.rule.Inject;
 import com.liferay.portal.upgrade.registry.UpgradeStepRegistrator;
@@ -72,9 +73,7 @@ public class DLFileShortcutExternalReferenceCodeUpgradeProcessTest
 	}
 
 	@Override
-	protected DLFileShortcutExternalReferenceCodeUpgradeProcess
-		getUpgradeProcess() {
-
+	protected UpgradeProcess getUpgradeProcess() {
 		return new DLFileShortcutExternalReferenceCodeUpgradeProcess();
 	}
 

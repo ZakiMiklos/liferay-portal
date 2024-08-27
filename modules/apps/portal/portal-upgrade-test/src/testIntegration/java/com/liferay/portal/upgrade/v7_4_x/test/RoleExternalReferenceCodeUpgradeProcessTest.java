@@ -15,6 +15,7 @@ import com.liferay.portal.kernel.model.role.RoleConstants;
 import com.liferay.portal.kernel.service.RoleLocalService;
 import com.liferay.portal.kernel.test.util.ServiceContextTestUtil;
 import com.liferay.portal.kernel.test.util.TestPropsValues;
+import com.liferay.portal.kernel.upgrade.UpgradeProcess;
 import com.liferay.portal.kernel.util.ArrayUtil;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.version.Version;
@@ -86,7 +87,7 @@ public class RoleExternalReferenceCodeUpgradeProcessTest
 	}
 
 	@Override
-	protected RoleExternalReferenceCodeUpgradeProcess getUpgradeProcess() {
+	protected UpgradeProcess getUpgradeProcess() {
 		return new RoleExternalReferenceCodeUpgradeProcess();
 	}
 
