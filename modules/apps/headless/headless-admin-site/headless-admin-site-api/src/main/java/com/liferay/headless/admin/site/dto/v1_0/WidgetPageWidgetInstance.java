@@ -5,40 +5,24 @@
 
 package com.liferay.headless.admin.site.dto.v1_0;
 
-
-
-import com.fasterxml.jackson.annotation.JsonAnyGetter;
-import com.fasterxml.jackson.annotation.JsonAnySetter;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonFilter;
 import com.fasterxml.jackson.annotation.JsonGetter;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.annotation.JsonSubTypes;
-import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.fasterxml.jackson.annotation.JsonValue;
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 
 import com.liferay.petra.function.UnsafeSupplier;
 import com.liferay.petra.string.StringBundler;
-import com.liferay.portal.kernel.json.JSONFactoryUtil;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.vulcan.graphql.annotation.GraphQLField;
 import com.liferay.portal.vulcan.graphql.annotation.GraphQLName;
-import com.liferay.portal.vulcan.jackson.databind.deser.JSONStringStdDeserializer;
 import com.liferay.portal.vulcan.util.ObjectMapperUtil;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.io.Serializable;
 
-import java.math.BigDecimal;
-
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
-
-import java.util.Date;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Objects;
@@ -48,169 +32,127 @@ import java.util.function.Supplier;
 import javax.annotation.Generated;
 
 import javax.validation.Valid;
-import javax.validation.constraints.DecimalMax;
-import javax.validation.constraints.DecimalMin;
-import javax.validation.constraints.NotEmpty;
-import javax.validation.constraints.NotNull;
-import javax.validation.constraints.Size;
 
-import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
 
 /**
  * @author Rubén Pulido
  * @generated
  */
-
-
-
-
 @Generated("")
 @GraphQLName(
-		description = "A widget instance in a widget page.", value = "WidgetPageWidgetInstance"
+	description = "A widget instance in a widget page.",
+	value = "WidgetPageWidgetInstance"
 )
 @JsonFilter("Liferay.Vulcan")
 @XmlRootElement(name = "WidgetPageWidgetInstance")
-public class WidgetPageWidgetInstance  implements Serializable {
+public class WidgetPageWidgetInstance implements Serializable {
 
 	public static WidgetPageWidgetInstance toDTO(String json) {
 		return ObjectMapperUtil.readValue(WidgetPageWidgetInstance.class, json);
 	}
 
 	public static WidgetPageWidgetInstance unsafeToDTO(String json) {
-		return ObjectMapperUtil.unsafeReadValue(WidgetPageWidgetInstance.class, json);
+		return ObjectMapperUtil.unsafeReadValue(
+			WidgetPageWidgetInstance.class, json);
 	}
 
-
-
-
-
-
-
-
-
-		@Schema(
-
-				description = "The external reference code of the widget instance."
-
-		)
-
-
-
-
-		public String getExternalReferenceCode() {
-			if (_externalReferenceCodeSupplier != null) {
-				externalReferenceCode = _externalReferenceCodeSupplier.get();
-
-				_externalReferenceCodeSupplier = null;
-			}
-
-			return externalReferenceCode;
-		}
-
-
-		public void setExternalReferenceCode(String externalReferenceCode) {
-			this.externalReferenceCode = externalReferenceCode;
+	@Schema(description = "The external reference code of the widget instance.")
+	public String getExternalReferenceCode() {
+		if (_externalReferenceCodeSupplier != null) {
+			externalReferenceCode = _externalReferenceCodeSupplier.get();
 
 			_externalReferenceCodeSupplier = null;
 		}
 
-		@JsonIgnore
-		public void setExternalReferenceCode(UnsafeSupplier<String, Exception> externalReferenceCodeUnsafeSupplier) {
-				_externalReferenceCodeSupplier = () -> {
-					try {
-						return externalReferenceCodeUnsafeSupplier.get();
-					}
-					catch (RuntimeException runtimeException) {
-						throw runtimeException;
-					}
-					catch (Exception exception) {
-						throw new RuntimeException(exception);
-					}
-				};
-		}
+		return externalReferenceCode;
+	}
 
-		@GraphQLField(
-				description = "The external reference code of the widget instance."
-		)
-		@JsonProperty(
-				access = JsonProperty.Access.READ_WRITE
+	public void setExternalReferenceCode(String externalReferenceCode) {
+		this.externalReferenceCode = externalReferenceCode;
 
-		)
-		protected String externalReferenceCode;
+		_externalReferenceCodeSupplier = null;
+	}
 
-		@JsonIgnore
-		private Supplier<String> _externalReferenceCodeSupplier;
+	@JsonIgnore
+	public void setExternalReferenceCode(
+		UnsafeSupplier<String, Exception> externalReferenceCodeUnsafeSupplier) {
 
-
-
-
-
-
-
-		@Schema(
-
-
-		)
-
-			@Valid
-
-
-
-			@JsonGetter("wordSpacing")
-
-		public WordSpacing getWordSpacing() {
-			if (_wordSpacingSupplier != null) {
-				wordSpacing = _wordSpacingSupplier.get();
-
-				_wordSpacingSupplier = null;
+		_externalReferenceCodeSupplier = () -> {
+			try {
+				return externalReferenceCodeUnsafeSupplier.get();
 			}
-
-			return wordSpacing;
-		}
-
-			@JsonIgnore
-			public String getWordSpacingAsString() {
-				WordSpacing wordSpacing = getWordSpacing();
-
-				if (wordSpacing == null) {
-					return null;
-				}
-
-				return wordSpacing.toString();
+			catch (RuntimeException runtimeException) {
+				throw runtimeException;
 			}
+			catch (Exception exception) {
+				throw new RuntimeException(exception);
+			}
+		};
+	}
 
-		public void setWordSpacing(WordSpacing wordSpacing) {
-			this.wordSpacing = wordSpacing;
+	@GraphQLField(
+		description = "The external reference code of the widget instance."
+	)
+	@JsonProperty(access = JsonProperty.Access.READ_WRITE)
+	protected String externalReferenceCode;
+
+	@JsonIgnore
+	private Supplier<String> _externalReferenceCodeSupplier;
+
+	@JsonGetter("wordSpacing")
+	@Schema
+	@Valid
+	public WordSpacing getWordSpacing() {
+		if (_wordSpacingSupplier != null) {
+			wordSpacing = _wordSpacingSupplier.get();
 
 			_wordSpacingSupplier = null;
 		}
 
-		@JsonIgnore
-		public void setWordSpacing(UnsafeSupplier<WordSpacing, Exception> wordSpacingUnsafeSupplier) {
-				_wordSpacingSupplier = () -> {
-					try {
-						return wordSpacingUnsafeSupplier.get();
-					}
-					catch (RuntimeException runtimeException) {
-						throw runtimeException;
-					}
-					catch (Exception exception) {
-						throw new RuntimeException(exception);
-					}
-				};
+		return wordSpacing;
+	}
+
+	@JsonIgnore
+	public String getWordSpacingAsString() {
+		WordSpacing wordSpacing = getWordSpacing();
+
+		if (wordSpacing == null) {
+			return null;
 		}
 
-		@GraphQLField(
-		)
-		@JsonProperty(
-				access = JsonProperty.Access.READ_WRITE
+		return wordSpacing.toString();
+	}
 
-		)
-		protected WordSpacing wordSpacing;
+	public void setWordSpacing(WordSpacing wordSpacing) {
+		this.wordSpacing = wordSpacing;
 
-		@JsonIgnore
-		private Supplier<WordSpacing> _wordSpacingSupplier;
+		_wordSpacingSupplier = null;
+	}
+
+	@JsonIgnore
+	public void setWordSpacing(
+		UnsafeSupplier<WordSpacing, Exception> wordSpacingUnsafeSupplier) {
+
+		_wordSpacingSupplier = () -> {
+			try {
+				return wordSpacingUnsafeSupplier.get();
+			}
+			catch (RuntimeException runtimeException) {
+				throw runtimeException;
+			}
+			catch (Exception exception) {
+				throw new RuntimeException(exception);
+			}
+		};
+	}
+
+	@GraphQLField
+	@JsonProperty(access = JsonProperty.Access.READ_WRITE)
+	protected WordSpacing wordSpacing;
+
+	@JsonIgnore
+	private Supplier<WordSpacing> _wordSpacingSupplier;
 
 	@Override
 	public boolean equals(Object object) {
@@ -222,11 +164,11 @@ public class WidgetPageWidgetInstance  implements Serializable {
 			return false;
 		}
 
-		WidgetPageWidgetInstance widgetPageWidgetInstance = (WidgetPageWidgetInstance)object;
+		WidgetPageWidgetInstance widgetPageWidgetInstance =
+			(WidgetPageWidgetInstance)object;
 
 		return Objects.equals(toString(), widgetPageWidgetInstance.toString());
 	}
-
 
 	@Override
 	public int hashCode() {
@@ -240,75 +182,55 @@ public class WidgetPageWidgetInstance  implements Serializable {
 
 		sb.append("{");
 
+		String externalReferenceCode = getExternalReferenceCode();
 
-
-
-
-
-			String externalReferenceCode = getExternalReferenceCode();
-
-			if (externalReferenceCode != null) {
-				if (sb.length() > 1) {
-					sb.append(", ");
-				}
-
-
-				sb.append("\"externalReferenceCode\": ");
-
-							sb.append("\"");
-
-								sb.append(_escape(externalReferenceCode));
-
-							sb.append("\"");
+		if (externalReferenceCode != null) {
+			if (sb.length() > 1) {
+				sb.append(", ");
 			}
 
+			sb.append("\"externalReferenceCode\": ");
 
-			WordSpacing wordSpacing = getWordSpacing();
+			sb.append("\"");
 
-			if (wordSpacing != null) {
-				if (sb.length() > 1) {
-					sb.append(", ");
-				}
+			sb.append(_escape(externalReferenceCode));
 
+			sb.append("\"");
+		}
 
-				sb.append("\"wordSpacing\": ");
+		WordSpacing wordSpacing = getWordSpacing();
 
-							sb.append("\"");
-
-								sb.append(wordSpacing);
-
-							sb.append("\"");
+		if (wordSpacing != null) {
+			if (sb.length() > 1) {
+				sb.append(", ");
 			}
+
+			sb.append("\"wordSpacing\": ");
+
+			sb.append("\"");
+
+			sb.append(wordSpacing);
+
+			sb.append("\"");
+		}
 
 		sb.append("}");
 
 		return sb.toString();
 	}
 
-	@Schema(accessMode = Schema.AccessMode.READ_ONLY, defaultValue = "com.liferay.headless.admin.site.dto.v1_0.WidgetPageWidgetInstance", name = "x-class-name")
+	@Schema(
+		accessMode = Schema.AccessMode.READ_ONLY,
+		defaultValue = "com.liferay.headless.admin.site.dto.v1_0.WidgetPageWidgetInstance",
+		name = "x-class-name"
+	)
 	public String xClassName;
 
-		@GraphQLName("WordSpacing")
-		public static enum WordSpacing {
+	@GraphQLName("WordSpacing")
+	public static enum WordSpacing {
 
-			_1EM("-1em")
-
-				,
-					_095EM("-0.95em")
-
-				,
-					09EM("0.9em")
-
-				,
-					095EM("0.95em")
-
-				,
-					12EM("1.2em")
-
-				,
-					12EM("12em")
-
-		;
+		_1EM("-1em"), _0_95EM("-0.95em"), NUM_0_9EM("0.9em"),
+		NUM_0_95EM("0.95em"), NUM_1_2EM("1.2em"), NUM_12EM("12em");
 
 		@JsonCreator
 		public static WordSpacing create(String value) {
@@ -341,10 +263,12 @@ public class WidgetPageWidgetInstance  implements Serializable {
 
 		private final String _value;
 
-		}
+	}
 
 	private static String _escape(Object object) {
-		return StringUtil.replace(String.valueOf(object), _JSON_ESCAPE_STRINGS[0], _JSON_ESCAPE_STRINGS[1]);
+		return StringUtil.replace(
+			String.valueOf(object), _JSON_ESCAPE_STRINGS[0],
+			_JSON_ESCAPE_STRINGS[1]);
 	}
 
 	private static boolean _isArray(Object value) {
@@ -378,10 +302,13 @@ public class WidgetPageWidgetInstance  implements Serializable {
 			if (_isArray(value)) {
 				sb.append("[");
 
-				Object[] valueArray = (Object[]) value;
+				Object[] valueArray = (Object[])value;
 
 				for (int i = 0; i < valueArray.length; i++) {
-					if (valueArray[i] instanceof String) {
+					if (valueArray[i] instanceof Map) {
+						sb.append(_toJSON((Map<String, ?>)valueArray[i]));
+					}
+					else if (valueArray[i] instanceof String) {
 						sb.append("\"");
 						sb.append(valueArray[i]);
 						sb.append("\"");
@@ -398,7 +325,7 @@ public class WidgetPageWidgetInstance  implements Serializable {
 				sb.append("]");
 			}
 			else if (value instanceof Map) {
-				sb.append(_toJSON((Map<String, ?>) value));
+				sb.append(_toJSON((Map<String, ?>)value));
 			}
 			else if (value instanceof String) {
 				sb.append("\"");

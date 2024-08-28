@@ -63,6 +63,20 @@ public class WidgetPageWidgetInstanceSerDes {
 			sb.append("\"");
 		}
 
+		if (widgetPageWidgetInstance.getWordSpacing() != null) {
+			if (sb.length() > 1) {
+				sb.append(", ");
+			}
+
+			sb.append("\"wordSpacing\": ");
+
+			sb.append("\"");
+
+			sb.append(widgetPageWidgetInstance.getWordSpacing());
+
+			sb.append("\"");
+		}
+
 		sb.append("}");
 
 		return sb.toString();
@@ -94,6 +108,15 @@ public class WidgetPageWidgetInstanceSerDes {
 					widgetPageWidgetInstance.getExternalReferenceCode()));
 		}
 
+		if (widgetPageWidgetInstance.getWordSpacing() == null) {
+			map.put("wordSpacing", null);
+		}
+		else {
+			map.put(
+				"wordSpacing",
+				String.valueOf(widgetPageWidgetInstance.getWordSpacing()));
+		}
+
 		return map;
 	}
 
@@ -115,6 +138,9 @@ public class WidgetPageWidgetInstanceSerDes {
 			if (Objects.equals(jsonParserFieldName, "externalReferenceCode")) {
 				return false;
 			}
+			else if (Objects.equals(jsonParserFieldName, "wordSpacing")) {
+				return false;
+			}
 
 			return false;
 		}
@@ -128,6 +154,13 @@ public class WidgetPageWidgetInstanceSerDes {
 				if (jsonParserFieldValue != null) {
 					widgetPageWidgetInstance.setExternalReferenceCode(
 						(String)jsonParserFieldValue);
+				}
+			}
+			else if (Objects.equals(jsonParserFieldName, "wordSpacing")) {
+				if (jsonParserFieldValue != null) {
+					widgetPageWidgetInstance.setWordSpacing(
+						WidgetPageWidgetInstance.WordSpacing.create(
+							(String)jsonParserFieldValue));
 				}
 			}
 		}
