@@ -109,8 +109,9 @@ public class WidgetPageWidgetInstance implements Cloneable, Serializable {
 
 	public static enum WordSpacing {
 
-		_1EM("-1em"), _0_95EM("-0.95em"), NUM_0_9EM("0.9em"),
-		NUM_0_95EM("0.95em"), NUM_1_2EM("1.2em"), NUM_12EM("12em");
+		NEGATIVE_1EM("-1em"), NEGATIVE_0_POINT_95EM("-0.95em"),
+		POSITIVE_0_POINT_9EM("0.9em"), POSITIVE_0_POINT_95EM("0.95em"),
+		POSITIVE_1_POINT_2EM("1.2em"), POSITIVE_12EM("12em");
 
 		public static WordSpacing create(String value) {
 			for (WordSpacing wordSpacing : values()) {
