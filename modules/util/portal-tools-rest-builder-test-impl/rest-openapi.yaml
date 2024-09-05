@@ -18,6 +18,12 @@ components:
             allOf:
                 - $ref: "#/components/schemas/TestEntity"
             type: object
+        EnumTestEntity:
+            properties:
+                testEnum:
+                    enum: [-1em, -0.95em, 1em, 0.95em]
+                    type: string
+            type: object
         JSONMapAttributeTestEntity:
             description:
                 Test Component to test the generation of getValue method on Entities when one or multiple JSON Maps are
