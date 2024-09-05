@@ -173,9 +173,6 @@ public class UpdateFormItemConfigMVCActionCommandTest {
 						).build(),
 						_portal, _editPageInfoItemCapability)) {
 
-			List<String> uniqueInfoFieldIds = TransformUtil.transform(
-				ListUtil.fromArray(allInfoFields), InfoField::getUniqueId);
-
 			long classNameId = _portal.getClassNameId(
 				MockObject.class.getName());
 
@@ -185,6 +182,9 @@ public class UpdateFormItemConfigMVCActionCommandTest {
 					_layoutStructureProvider, _segmentsExperienceId);
 
 			String formItemId = addItemJSONObject.getString("addedItemId");
+
+			List<String> uniqueInfoFieldIds = TransformUtil.transform(
+				ListUtil.fromArray(allInfoFields), InfoField::getUniqueId);
 
 			JSONObject updateFormJSONObject = ReflectionTestUtil.invoke(
 				_mvcActionCommand, "_updateFormStyledLayoutStructureItemConfig",
