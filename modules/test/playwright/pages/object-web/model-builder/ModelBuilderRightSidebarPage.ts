@@ -12,13 +12,18 @@ export class ModelBuilderRightSidebarPage {
 	readonly modalDeleteObjectRelationshipTextField: Locator;
 	readonly objectDefinitionActivateObject: Locator;
 	readonly objectDefinitionEntryTitleField: Locator;
-	readonly objectDefinitionLabel: Locator;
 	readonly objectDefinitionLabelLocalizationButton: Locator;
 	readonly objectDefinitionPanelLink: Locator;
 	readonly objectDefinitionPluralLabel: Locator;
 	readonly objectDefinitionPluralLabelLocalizationButton: Locator;
 	readonly objectDefinitionScope: Locator;
+	readonly objectRelationshipDeletionType: Locator;
+	readonly objectRelationshipManyRecordsOf: Locator;
+	readonly objectRelationshipOneRecordOf: Locator;
+	readonly objectRelationshipType: Locator;
 	readonly page: Page;
+	readonly sidebarLabelInput: Locator;
+	readonly sidebarName: Locator;
 
 	constructor(page: Page) {
 		this.deleteButton = page.getByRole('button', {
@@ -38,7 +43,10 @@ export class ModelBuilderRightSidebarPage {
 			page.getByLabel('Activate Object');
 		this.objectDefinitionEntryTitleField =
 			page.getByLabel('Entry Title Field');
-		this.objectDefinitionLabel = page.getByLabel('LabelMandatory', {
+		this.sidebarLabelInput = page.getByLabel('Label' + 'Mandatory', {
+			exact: true,
+		});
+		this.sidebarName = page.getByLabel('Name' + 'Mandatory', {
 			exact: true,
 		});
 		this.objectDefinitionLabelLocalizationButton = page
@@ -50,6 +58,11 @@ export class ModelBuilderRightSidebarPage {
 			.getByTitle('Open Localizations')
 			.last();
 		this.objectDefinitionScope = page.getByLabel('Scope');
+		this.objectRelationshipDeletionType = page.getByLabel('Deletion Type');
+		this.objectRelationshipManyRecordsOf =
+			page.getByLabel('Many Records Of');
+		this.objectRelationshipOneRecordOf = page.getByLabel('One Record Of');
+		this.objectRelationshipType = page.getByLabel('Type');
 		this.page = page;
 	}
 

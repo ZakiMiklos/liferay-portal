@@ -26,6 +26,7 @@ import com.liferay.dynamic.data.mapping.storage.StorageType;
 import com.liferay.dynamic.data.mapping.test.util.DDMStructureTestHelper;
 import com.liferay.dynamic.data.mapping.test.util.DDMStructureTestUtil;
 import com.liferay.fragment.constants.FragmentConstants;
+import com.liferay.fragment.contributor.FragmentCollectionContributorRegistry;
 import com.liferay.fragment.entry.processor.constants.FragmentEntryProcessorConstants;
 import com.liferay.fragment.model.FragmentCollection;
 import com.liferay.fragment.model.FragmentEntry;
@@ -103,6 +104,7 @@ import com.liferay.portal.kernel.test.util.TestPropsValues;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
 import com.liferay.portal.kernel.util.ContentTypes;
 import com.liferay.portal.kernel.util.FileUtil;
+import com.liferay.portal.kernel.util.HtmlUtil;
 import com.liferay.portal.kernel.util.ListUtil;
 import com.liferay.portal.kernel.util.LocaleUtil;
 import com.liferay.portal.kernel.util.LoggingTimer;
@@ -178,15 +180,7 @@ public class RenderLayoutStructureTagTest {
 
 		Layout layout = LayoutTestUtil.addTypeContentLayout(_group);
 
-		FileEntry fileEntry = _dlAppLocalService.addFileEntry(
-			null, TestPropsValues.getUserId(), _group.getGroupId(),
-			DLFolderConstants.DEFAULT_PARENT_FOLDER_ID,
-			RandomTestUtil.randomString() + ".jpg", ContentTypes.IMAGE_JPEG,
-			FileUtil.getBytes(
-				RenderLayoutStructureTagTest.class, "dependencies/liferay.jpg"),
-			null, null, null,
-			ServiceContextTestUtil.getServiceContext(
-				_group, TestPropsValues.getUserId()));
+		FileEntry fileEntry = _addFileEntry();
 
 		String url = _dlURLHelper.getPreviewURL(
 			fileEntry, fileEntry.getFileVersion(), null, StringPool.BLANK,
@@ -736,16 +730,7 @@ public class RenderLayoutStructureTagTest {
 						layoutStructure.addContainerStyledLayoutStructureItem(
 							layoutStructure.getMainItemId(), 0);
 
-			FileEntry fileEntry = _dlAppLocalService.addFileEntry(
-				null, TestPropsValues.getUserId(), _group.getGroupId(),
-				DLFolderConstants.DEFAULT_PARENT_FOLDER_ID,
-				RandomTestUtil.randomString() + ".jpg", ContentTypes.IMAGE_JPEG,
-				FileUtil.getBytes(
-					RenderLayoutStructureTagTest.class,
-					"dependencies/liferay.jpg"),
-				null, null, null,
-				ServiceContextTestUtil.getServiceContext(
-					_group, TestPropsValues.getUserId()));
+			FileEntry fileEntry = _addFileEntry();
 
 			String url = _dlURLHelper.getPreviewURL(
 				fileEntry, fileEntry.getFileVersion(), null, StringPool.BLANK,
@@ -1132,6 +1117,119 @@ public class RenderLayoutStructureTagTest {
 		}
 	}
 
+	@Test
+	@TestInfo("LPS-120094")
+	public void testRenderFragmentEntryLinkWithImageLinkToURL()
+		throws Exception {
+
+		String languageId = LocaleUtil.toLanguageId(
+			_portal.getSiteDefaultLocale(_group));
+
+		FileEntry fileEntry = _addFileEntry();
+
+		Layout layout = LayoutTestUtil.addTypeContentLayout(_group);
+
+		_addFragmentEntryLinkToLayout(
+			JSONUtil.put(
+				"image-square",
+				JSONUtil.put(
+					languageId, RandomTestUtil.randomString()
+				).put(
+					languageId,
+					JSONUtil.put(
+						"classNameId", _portal.getClassNameId(FileEntry.class)
+					).put(
+						"classPK", fileEntry.getFileEntryId()
+					).put(
+						"fileEntryId", fileEntry.getFileEntryId()
+					).put(
+						"url",
+						_dlURLHelper.getPreviewURL(
+							fileEntry, fileEntry.getFileVersion(), null,
+							StringPool.BLANK, false, false)
+					)
+				).put(
+					"config",
+					JSONUtil.put(
+						"href",
+						JSONUtil.put(languageId, "https://www.liferay.com/")
+					).put(
+						"mapperType", "link"
+					)
+				)),
+			"BASIC_COMPONENT-image", layout.fetchDraftLayout(),
+			_segmentsExperienceLocalService.fetchDefaultSegmentsExperienceId(
+				layout.getPlid()));
+
+		ContentLayoutTestUtil.publishLayout(layout.fetchDraftLayout(), layout);
+
+		String content = _getRenderLayoutHTML(layout);
+
+		Assert.assertTrue(
+			content,
+			StringUtil.contains(
+				content,
+				StringBundler.concat(
+					"<a href=\"https://www.liferay.com/\"><img alt=\"\" ",
+					"class=\"w-100\" data-lfr-editable-id=\"image-square\" ",
+					"data-lfr-editable-type=\"image\" src=\"",
+					HtmlUtil.escape(
+						_dlURLHelper.getPreviewURL(
+							fileEntry, fileEntry.getFileVersion(), null,
+							StringPool.BLANK)),
+					"\" data-fileentryid=\"", fileEntry.getFileEntryId(),
+					"\"></a>"),
+				StringPool.BLANK));
+	}
+
+	@Test
+	@TestInfo("LPS-120348")
+	public void testRenderFragmentEntryLinkWithLinkToURL() throws Exception {
+		String languageId = LocaleUtil.toLanguageId(
+			_portal.getSiteDefaultLocale(_group));
+
+		String expectedContent = RandomTestUtil.randomString();
+
+		Layout layout = LayoutTestUtil.addTypeContentLayout(_group);
+
+		_addFragmentEntryLinkToLayout(
+			JSONUtil.put(
+				"element-text",
+				JSONUtil.put(
+					languageId, expectedContent
+				).put(
+					"config",
+					JSONUtil.put(
+						"href",
+						JSONUtil.put(languageId, "https://www.liferay.com/")
+					).put(
+						"mapperType", "link"
+					).put(
+						"target", "_blank"
+					)
+				).put(
+					"defaultValue", "Heading Example"
+				)),
+			"BASIC_COMPONENT-heading", layout.fetchDraftLayout(),
+			_segmentsExperienceLocalService.fetchDefaultSegmentsExperienceId(
+				layout.getPlid()));
+
+		ContentLayoutTestUtil.publishLayout(layout.fetchDraftLayout(), layout);
+
+		String content = _getRenderLayoutHTML(layout);
+
+		Assert.assertTrue(
+			content,
+			StringUtil.contains(
+				content,
+				StringBundler.concat(
+					"data-lfr-editable-id=\"element-text\" ",
+					"data-lfr-editable-type=\"text\"><a target=\"_blank\" ",
+					"href=\"https://www.liferay.com/\">", expectedContent,
+					"</a></h1></div>"),
+				StringPool.BLANK));
+	}
+
 	private List<AssetEntry> _addAssetEntries(AssetListEntry assetListEntry)
 		throws Exception {
 
@@ -1270,6 +1368,18 @@ public class RenderLayoutStructureTagTest {
 		return _layoutLocalService.getLayout(layout.getPlid());
 	}
 
+	private FileEntry _addFileEntry() throws Exception {
+		return _dlAppLocalService.addFileEntry(
+			null, TestPropsValues.getUserId(), _group.getGroupId(),
+			DLFolderConstants.DEFAULT_PARENT_FOLDER_ID,
+			RandomTestUtil.randomString() + ".jpg", ContentTypes.IMAGE_JPEG,
+			FileUtil.getBytes(
+				RenderLayoutStructureTagTest.class, "dependencies/liferay.jpg"),
+			null, null, null,
+			ServiceContextTestUtil.getServiceContext(
+				_group, TestPropsValues.getUserId()));
+	}
+
 	private FragmentEntry _addFragmentEntry() throws Exception {
 		FragmentCollection fragmentCollection =
 			_fragmentCollectionLocalService.addFragmentCollection(
@@ -1332,6 +1442,27 @@ public class RenderLayoutStructureTagTest {
 		return _addFragmentEntryLinkToLayout(
 			JSONUtil.put("element-text", elemenTextJSONObject), fragmentEntry,
 			layout, parentItemId, 0, segmentsExperienceId);
+	}
+
+	private FragmentEntryLink _addFragmentEntryLinkToLayout(
+			JSONObject editableFragmentEntryProcessorJSONObject,
+			String fragmentEntryKey, Layout layout, long segmentsExperienceId)
+		throws Exception {
+
+		FragmentEntry fragmentEntry =
+			_fragmentCollectionContributorRegistry.getFragmentEntry(
+				fragmentEntryKey);
+
+		return ContentLayoutTestUtil.addFragmentEntryLinkToLayout(
+			JSONUtil.put(
+				FragmentEntryProcessorConstants.
+					KEY_EDITABLE_FRAGMENT_ENTRY_PROCESSOR,
+				editableFragmentEntryProcessorJSONObject
+			).toString(),
+			fragmentEntry.getCss(), fragmentEntry.getConfiguration(),
+			fragmentEntry.getFragmentEntryId(), fragmentEntry.getHtml(),
+			fragmentEntry.getJs(), layout, fragmentEntry.getFragmentEntryKey(),
+			fragmentEntry.getType(), null, 0, segmentsExperienceId);
 	}
 
 	private JournalArticle _addJournalArticle(DDMStructure ddmStructure)
@@ -1613,6 +1744,10 @@ public class RenderLayoutStructureTagTest {
 
 	@Inject
 	private EntityCache _entityCache;
+
+	@Inject
+	private FragmentCollectionContributorRegistry
+		_fragmentCollectionContributorRegistry;
 
 	@Inject
 	private FragmentCollectionLocalService _fragmentCollectionLocalService;
