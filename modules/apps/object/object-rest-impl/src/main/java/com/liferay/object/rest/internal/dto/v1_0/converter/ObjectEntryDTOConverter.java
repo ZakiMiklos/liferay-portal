@@ -484,75 +484,67 @@ public class ObjectEntryDTOConverter
 		fileEntry.setExternalReferenceCode(
 			dlFileEntry::getExternalReferenceCode);
 
-		if (FeatureFlagManagerUtil.isEnabled(
-				objectDefinition.getCompanyId(), "LPS-174455")) {
+		fileEntry.setFileBase64(
+			() -> {
+				if (FeatureFlagManagerUtil.isEnabled(
+						objectDefinition.getCompanyId(), "LPD-29347")) {
 
-			fileEntry.setFileBase64(
-				() -> {
-					if (FeatureFlagManagerUtil.isEnabled(
-							objectDefinition.getCompanyId(), "LPD-29347")) {
+					String fileSource = String.valueOf(
+						ObjectFieldSettingUtil.getValue(
+							ObjectFieldSettingConstants.NAME_FILE_SOURCE,
+							objectField.getObjectFieldSettings()));
 
-						String fileSource = String.valueOf(
-							ObjectFieldSettingUtil.getValue(
-								ObjectFieldSettingConstants.NAME_FILE_SOURCE,
-								objectField.getObjectFieldSettings()));
+					if (fileSource.equals(
+							ObjectFieldSettingConstants.VALUE_USER_COMPUTER)) {
 
-						if (fileSource.equals(
-								ObjectFieldSettingConstants.
-									VALUE_USER_COMPUTER)) {
-
-							boolean showFilesInDocumentsAndMedia =
-								GetterUtil.getBoolean(
-									ObjectFieldSettingUtil.getValue(
-										ObjectFieldSettingConstants.
-											NAME_SHOW_FILES_IN_DOCS_AND_MEDIA,
-										objectField.getObjectFieldSettings()));
-
-							if (!showFilesInDocumentsAndMedia) {
-								return Base64.encode(
-									_file.getBytes(
-										dlFileEntry.getContentStream()));
-							}
-						}
-					}
-
-					return NestedFieldsSupplier.supply(
-						objectFieldName + ".fileBase64",
-						fieldName -> Base64.encode(
-							_file.getBytes(dlFileEntry.getContentStream())));
-				});
-			fileEntry.setFolder(
-				() -> (Folder)NestedFieldsSupplier.supply(
-					objectFieldName + ".folder",
-					fieldName -> {
-						if (!Objects.equals(
-								ObjectFieldSettingConstants.
-									VALUE_DOCS_AND_MEDIA,
+						boolean showFilesInDocumentsAndMedia =
+							GetterUtil.getBoolean(
 								ObjectFieldSettingUtil.getValue(
 									ObjectFieldSettingConstants.
-										NAME_FILE_SOURCE,
-									objectField))) {
+										NAME_SHOW_FILES_IN_DOCS_AND_MEDIA,
+									objectField.getObjectFieldSettings()));
 
-							return null;
+						if (!showFilesInDocumentsAndMedia) {
+							return Base64.encode(
+								_file.getBytes(dlFileEntry.getContentStream()));
 						}
+					}
+				}
 
-						Folder folder = new Folder();
+				return NestedFieldsSupplier.supply(
+					objectFieldName + ".fileBase64",
+					fieldName -> Base64.encode(
+						_file.getBytes(dlFileEntry.getContentStream())));
+			});
+		fileEntry.setFolder(
+			() -> (Folder)NestedFieldsSupplier.supply(
+				objectFieldName + ".folder",
+				fieldName -> {
+					if (!Objects.equals(
+							ObjectFieldSettingConstants.VALUE_DOCS_AND_MEDIA,
+							ObjectFieldSettingUtil.getValue(
+								ObjectFieldSettingConstants.NAME_FILE_SOURCE,
+								objectField))) {
 
-						folder.setExternalReferenceCode(
-							() -> {
-								if (dlFileEntry.getFolderId() == 0) {
-									return null;
-								}
+						return null;
+					}
 
-								DLFolder dlFolder = dlFileEntry.getFolder();
+					Folder folder = new Folder();
 
-								return dlFolder.getExternalReferenceCode();
-							});
-						folder.setSiteId(dlFileEntry::getGroupId);
+					folder.setExternalReferenceCode(
+						() -> {
+							if (dlFileEntry.getFolderId() == 0) {
+								return null;
+							}
 
-						return folder;
-					}));
-		}
+							DLFolder dlFolder = dlFileEntry.getFolder();
+
+							return dlFolder.getExternalReferenceCode();
+						});
+					folder.setSiteId(dlFileEntry::getGroupId);
+
+					return folder;
+				}));
 
 		fileEntry.setId(dlFileEntry::getFileEntryId);
 		fileEntry.setLink(
