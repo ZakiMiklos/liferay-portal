@@ -93,13 +93,28 @@ public class RelationshipObjectFieldBusinessType
 					NAME_OBJECT_RELATIONSHIP_ERC_OBJECT_FIELD_NAME,
 				objectField);
 
+		String objectRelationshipObjectFieldName =
+			ObjectFieldSettingUtil.getValue(
+				ObjectFieldSettingConstants.NAME_OBJECT_DEFINITION_1_SHORT_NAME,
+				objectField
+			).toLowerCase();
+
+		objectRelationshipObjectFieldName += "rel";
+
 		if (Objects.equals(
 				objectField.getRelationshipType(),
 				ObjectRelationshipConstants.TYPE_ONE_TO_MANY) &&
-			values.containsKey(objectRelationshipERCObjectFieldName)) {
+			(values.containsKey(objectRelationshipERCObjectFieldName) ||
+			 values.containsKey(objectRelationshipObjectFieldName))) {
 
 			String externalReferenceCode = GetterUtil.getString(
 				values.get(objectRelationshipERCObjectFieldName));
+
+			Object objectValue = values.get(objectRelationshipObjectFieldName);
+
+			if (Validator.isNotNull(objectValue)) {
+				return 1L;
+			}
 
 			if (Validator.isNull(externalReferenceCode)) {
 				return 0;
