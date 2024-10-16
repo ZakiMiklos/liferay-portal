@@ -152,6 +152,10 @@ public class DefaultObjectEntryManagerImpl
 		ServiceContext serviceContext = _createServiceContext(
 			dtoConverterContext, objectDefinition, objectEntry);
 
+		Map<String, List<ObjectEntry>> nestedFields = _addOrUpdateNestedObjectEntries(
+			dtoConverterContext, objectDefinition, objectEntry,
+			_getObjectRelationships(objectDefinition, objectEntry), scopeKey);
+
 		com.liferay.object.model.ObjectEntry serviceBuilderObjectEntry =
 			_objectEntryService.addObjectEntry(
 				getGroupId(objectDefinition, scopeKey),
@@ -163,10 +167,10 @@ public class DefaultObjectEntryManagerImpl
 
 		return _toObjectEntry(
 			dtoConverterContext, objectDefinition,
-			_addOrUpdateNestedObjectEntries(
+			_relateNestedObjectEntries(
 				dtoConverterContext, objectDefinition, objectEntry,
 				_getObjectRelationships(objectDefinition, objectEntry),
-				serviceBuilderObjectEntry, scopeKey));
+				serviceBuilderObjectEntry, nestedFields));
 	}
 
 	@Override
@@ -779,6 +783,11 @@ public class DefaultObjectEntryManagerImpl
 		ServiceContext serviceContext = _createServiceContext(
 			dtoConverterContext, objectDefinition, objectEntry);
 
+		Map<String, List<ObjectEntry>> nestedFields = _addOrUpdateNestedObjectEntries(
+			dtoConverterContext, objectDefinition, objectEntry,
+			_getObjectRelationships(objectDefinition, objectEntry),
+			objectEntry.getScopeKey());
+
 		serviceBuilderObjectEntry = _objectEntryService.updateObjectEntry(
 			objectEntryId,
 			_toObjectValues(
@@ -789,10 +798,10 @@ public class DefaultObjectEntryManagerImpl
 
 		return _toObjectEntry(
 			dtoConverterContext, objectDefinition,
-			_addOrUpdateNestedObjectEntries(
+			_relateNestedObjectEntries(
 				dtoConverterContext, objectDefinition, objectEntry,
 				_getObjectRelationships(objectDefinition, objectEntry),
-				serviceBuilderObjectEntry, objectEntry.getScopeKey()));
+				serviceBuilderObjectEntry, nestedFields));
 	}
 
 	@Override
@@ -810,6 +819,11 @@ public class DefaultObjectEntryManagerImpl
 
 		serviceContext.setCompanyId(companyId);
 
+		Map<String, List<ObjectEntry>> nestedFields = _addOrUpdateNestedObjectEntries(
+			dtoConverterContext, objectDefinition, objectEntry,
+			_getObjectRelationships(objectDefinition, objectEntry),
+			objectEntry.getScopeKey());
+
 		com.liferay.object.model.ObjectEntry serviceBuilderObjectEntry =
 			_objectEntryService.addOrUpdateObjectEntry(
 				externalReferenceCode, getGroupId(objectDefinition, scopeKey),
@@ -821,10 +835,10 @@ public class DefaultObjectEntryManagerImpl
 
 		return _toObjectEntry(
 			dtoConverterContext, objectDefinition,
-			_addOrUpdateNestedObjectEntries(
+			_relateNestedObjectEntries(
 				dtoConverterContext, objectDefinition, objectEntry,
 				_getObjectRelationships(objectDefinition, objectEntry),
-				serviceBuilderObjectEntry, scopeKey));
+				serviceBuilderObjectEntry, nestedFields));
 	}
 
 	private Map<String, String> _addAction(
@@ -851,20 +865,19 @@ public class DefaultObjectEntryManagerImpl
 			actionName, methodName, serviceBuilderObjectEntry, null, uriInfo);
 	}
 
-	private com.liferay.object.model.ObjectEntry
-			_addOrUpdateNestedObjectEntries(
-				DTOConverterContext dtoConverterContext,
-				ObjectDefinition objectDefinition, ObjectEntry objectEntry,
-				Map<String, ObjectRelationship> objectRelationships,
-				com.liferay.object.model.ObjectEntry serviceBuilderObjectEntry,
-				String scopeKey)
+	private Map<String, List<ObjectEntry>> _addOrUpdateNestedObjectEntries(
+			DTOConverterContext dtoConverterContext,
+			ObjectDefinition objectDefinition, ObjectEntry objectEntry,
+			Map<String, ObjectRelationship> objectRelationships,
+			String scopeKey)
 		throws Exception {
 
 		if (objectRelationships.isEmpty()) {
-			return serviceBuilderObjectEntry;
+			return null;
 		}
 
 		Map<String, Object> properties = objectEntry.getProperties();
+		Map<String, List<ObjectEntry>> nestedFields = new HashMap<>();
 
 		for (Map.Entry<String, ObjectRelationship> entry :
 				objectRelationships.entrySet()) {
@@ -887,7 +900,9 @@ public class DefaultObjectEntryManagerImpl
 				objectRelationshipElementsParser.parse(
 					objectRelationship, properties.get(entry.getKey()));
 
-			List<String> nestedExternalReferenceCodes = new ArrayList<>();
+			String relationShipId = StringBundler.concat(
+				"r_", entry.getKey(), "_",
+				relatedObjectDefinition.getPKObjectFieldName());
 
 			if (relatedObjectDefinition.isUnmodifiableSystemObject()) {
 				SystemObjectDefinitionManager systemObjectDefinitionManager =
@@ -896,25 +911,31 @@ public class DefaultObjectEntryManagerImpl
 							relatedObjectDefinition.getName());
 
 				for (Object item : nestedObjectEntries) {
-					Map<String, Object> nestedObjectEntry =
-						(Map<String, Object>)item;
-
+					ObjectEntry nestedObjectEntry = (ObjectEntry)item;
+					
 					long nestedObjectEntryId =
 						systemObjectDefinitionManager.upsertBaseModel(
 							String.valueOf(
-								nestedObjectEntry.get("externalReferenceCode")),
+								nestedObjectEntry.getExternalReferenceCode()),
 							relatedObjectDefinition.getCompanyId(),
-							dtoConverterContext.getUser(), nestedObjectEntry);
+							dtoConverterContext.getUser(), (Map<String, Object>) item);
 
-					_relateNestedObjectEntry(
-						objectDefinition, objectRelationship,
-						serviceBuilderObjectEntry.getPrimaryKey(),
-						nestedObjectEntryId, new ServiceContext());
+					nestedObjectEntry.setId(nestedObjectEntryId);
+					List<ObjectEntry> relationShipNestedIds = nestedFields.get(
+						relationShipId);
 
-					nestedExternalReferenceCodes.add(
-						systemObjectDefinitionManager.
-							getBaseModelExternalReferenceCode(
-								nestedObjectEntryId));
+					if (relationShipNestedIds == null) {
+						relationShipNestedIds = new ArrayList<>();
+					}
+					
+
+					relationShipNestedIds.add(nestedObjectEntry);
+
+					nestedFields.put(relationShipId, relationShipNestedIds);
+
+					if (!properties.containsKey(relationShipId)) {
+						properties.put(relationShipId, entry.getKey());
+					}
 				}
 			}
 			else {
@@ -922,73 +943,29 @@ public class DefaultObjectEntryManagerImpl
 					_objectEntryManagerRegistry.getObjectEntryManager(
 						relatedObjectDefinition.getStorageType());
 
-				boolean manyToOneObjectRelationship =
-					_isManyToOneObjectRelationship(
-						objectDefinition, objectRelationship,
-						relatedObjectDefinition);
-
 				for (Object item : nestedObjectEntries) {
 					ObjectEntry nestedObjectEntry = (ObjectEntry)item;
-
-					if (manyToOneObjectRelationship) {
-						Map<String, Object> nestedObjectEntryProperties =
-							nestedObjectEntry.getProperties();
-
-						String objectRelationshipName = StringBundler.concat(
-							"r_", objectRelationship.getName(), "_",
-							objectDefinition.getPKObjectFieldName());
-
-						nestedObjectEntryProperties.put(
-							objectRelationshipName,
-							serviceBuilderObjectEntry.getPrimaryKey());
-					}
 
 					nestedObjectEntry = objectEntryManager.updateObjectEntry(
 						objectDefinition.getCompanyId(), dtoConverterContext,
 						nestedObjectEntry.getExternalReferenceCode(),
 						relatedObjectDefinition, nestedObjectEntry, scopeKey);
 
-					if (!manyToOneObjectRelationship) {
-						_relateNestedObjectEntry(
-							objectDefinition, objectRelationship,
-							serviceBuilderObjectEntry.getPrimaryKey(),
-							nestedObjectEntry.getId(),
-							ServiceContextUtil.createServiceContext(
-								nestedObjectEntry,
-								dtoConverterContext.getUserId()));
+					List<ObjectEntry> relationShipNestedIds = nestedFields.get(
+						relationShipId);
+
+					if (relationShipNestedIds == null) {
+						relationShipNestedIds = new ArrayList<>();
 					}
 
-					nestedExternalReferenceCodes.add(
-						nestedObjectEntry.getExternalReferenceCode());
+					relationShipNestedIds.add(nestedObjectEntry);
+
+					nestedFields.put(relationShipId, relationShipNestedIds);
+
+					if (!properties.containsKey(relationShipId)) {
+						properties.put(relationShipId, entry.getKey());
+					}
 				}
-			}
-
-			long[] toDisassociatePrimaryKeys =
-				TransformUtil.transformToLongArray(
-					_getRelatedModels(
-						objectDefinition, objectRelationship,
-						serviceBuilderObjectEntry.getPrimaryKey(),
-						relatedObjectDefinition),
-					relatedModel -> {
-						ExternalReferenceCodeModel externalReferenceCodeModel =
-							(ExternalReferenceCodeModel)relatedModel;
-
-						if (nestedExternalReferenceCodes.contains(
-								externalReferenceCodeModel.
-									getExternalReferenceCode())) {
-
-							return null;
-						}
-
-						return relatedModel.getPrimaryKeyObj();
-					});
-
-			if (toDisassociatePrimaryKeys.length > 0) {
-				_disassociateRelatedModels(
-					objectDefinition, objectRelationship,
-					serviceBuilderObjectEntry.getPrimaryKey(),
-					toDisassociatePrimaryKeys, relatedObjectDefinition,
-					dtoConverterContext.getUserId());
 			}
 
 			if (properties.containsKey(entry.getKey())) {
@@ -996,8 +973,9 @@ public class DefaultObjectEntryManagerImpl
 			}
 		}
 
-		return objectEntryLocalService.getObjectEntry(
-			serviceBuilderObjectEntry.getPrimaryKey());
+		objectEntry.setProperties(() -> properties);
+
+		return nestedFields;
 	}
 
 	private void _checkObjectEntryObjectDefinitionId(
@@ -1508,6 +1486,106 @@ public class DefaultObjectEntryManagerImpl
 
 			searchRequestBuilder.addAggregation(nestedAggregation);
 		}
+	}
+
+	private com.liferay.object.model.ObjectEntry _relateNestedObjectEntries(
+			DTOConverterContext dtoConverterContext,
+			ObjectDefinition objectDefinition, ObjectEntry objectEntry,
+			Map<String, ObjectRelationship> objectRelationships,
+			com.liferay.object.model.ObjectEntry serviceBuilderObjectEntry,
+			Map<String, List<ObjectEntry>> nestedFields)
+		throws Exception {
+
+		if (objectRelationships.isEmpty()) {
+			return serviceBuilderObjectEntry;
+		}
+
+		Map<String, Object> properties = objectEntry.getProperties();
+
+		for (Map.Entry<String, ObjectRelationship> entry :
+				objectRelationships.entrySet()) {
+
+			ObjectRelationship objectRelationship = objectRelationships.get(
+				entry.getKey());
+
+			ObjectDefinition relatedObjectDefinition =
+				_getRelatedObjectDefinition(
+					objectDefinition, objectRelationship);
+
+			List<String> nestedExternalReferenceCodes = new ArrayList<>();
+
+			String relationShipId = StringBundler.concat(
+				"r_", entry.getKey(), "_",
+				relatedObjectDefinition.getPKObjectFieldName());
+
+			if (relatedObjectDefinition.isUnmodifiableSystemObject()) {
+				for (ObjectEntry nestedObjectEntry :
+					nestedFields.get(relationShipId)) {
+				_relateNestedObjectEntry(
+					objectDefinition, objectRelationship,
+					serviceBuilderObjectEntry.getPrimaryKey(),
+					nestedObjectEntry.getId(),
+					new ServiceContext());
+
+					nestedExternalReferenceCodes.add(
+						nestedObjectEntry.getExternalReferenceCode());
+				}
+			}
+			else {
+				boolean manyToOneObjectRelationship =
+					_isManyToOneObjectRelationship(
+						objectDefinition, objectRelationship,
+						relatedObjectDefinition);
+
+				if (!manyToOneObjectRelationship) {
+					for (ObjectEntry nestedObjectEntry :
+							nestedFields.get(relationShipId)) {
+
+						_relateNestedObjectEntry(
+							objectDefinition, objectRelationship,
+							serviceBuilderObjectEntry.getPrimaryKey(),
+							nestedObjectEntry.getId(),
+							ServiceContextUtil.createServiceContext(
+								nestedObjectEntry,
+								dtoConverterContext.getUserId()));
+
+						nestedExternalReferenceCodes.add(
+							nestedObjectEntry.getExternalReferenceCode());
+					}
+				}
+			}
+
+			long[] toDisassociatePrimaryKeys =
+				TransformUtil.transformToLongArray(
+					_getRelatedModels(
+						objectDefinition, objectRelationship,
+						serviceBuilderObjectEntry.getPrimaryKey(),
+						relatedObjectDefinition),
+					relatedModel -> {
+						ExternalReferenceCodeModel externalReferenceCodeModel =
+							(ExternalReferenceCodeModel)relatedModel;
+
+						if (nestedExternalReferenceCodes.contains(
+								externalReferenceCodeModel.
+									getExternalReferenceCode())) {
+
+							return null;
+						}
+
+						return relatedModel.getPrimaryKeyObj();
+					});
+
+			if (toDisassociatePrimaryKeys.length > 0) {
+				_disassociateRelatedModels(
+					objectDefinition, objectRelationship,
+					serviceBuilderObjectEntry.getPrimaryKey(),
+					toDisassociatePrimaryKeys, relatedObjectDefinition,
+					dtoConverterContext.getUserId());
+			}
+		}
+
+		return objectEntryLocalService.getObjectEntry(
+			serviceBuilderObjectEntry.getPrimaryKey());
 	}
 
 	private void _relateNestedObjectEntry(
