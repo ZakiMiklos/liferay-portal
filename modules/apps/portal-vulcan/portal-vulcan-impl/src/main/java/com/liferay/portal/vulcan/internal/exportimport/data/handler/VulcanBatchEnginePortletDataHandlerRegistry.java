@@ -12,10 +12,15 @@ import com.liferay.batch.engine.service.BatchEngineImportTaskService;
 import com.liferay.exportimport.kernel.lar.PortletDataHandler;
 import com.liferay.osgi.util.ServiceTrackerFactory;
 import com.liferay.portal.kernel.feature.flag.FeatureFlagListener;
+import com.liferay.portal.kernel.log.Log;
+import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.util.HashMapDictionaryBuilder;
 import com.liferay.portal.kernel.util.MapUtil;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.vulcan.batch.engine.VulcanBatchEngineTaskItemDelegate;
+
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.ServiceReference;
@@ -57,7 +62,23 @@ public class VulcanBatchEnginePortletDataHandlerRegistry {
 	protected void deactivate() {
 		_serviceRegistration.unregister();
 		_serviceTracker.close();
+
+		for (ServiceRegistration<PortletDataHandler> serviceRegistration :
+				_serviceRegistrations.values()) {
+
+			try {
+				serviceRegistration.unregister();
+			}
+			catch (IllegalStateException illegalStateException) {
+				_log.error(illegalStateException);
+			}
+		}
+
+		_serviceRegistrations.clear();
 	}
+
+	private static final Log _log = LogFactoryUtil.getLog(
+		VulcanBatchEnginePortletDataHandlerRegistry.class);
 
 	@Reference
 	private BatchEngineExportTaskExecutor _batchEngineExportTaskExecutor;
@@ -72,14 +93,16 @@ public class VulcanBatchEnginePortletDataHandlerRegistry {
 	private BatchEngineImportTaskService _batchEngineImportTaskService;
 
 	private ServiceRegistration<FeatureFlagListener> _serviceRegistration;
+	private final Map
+		<ServiceReference<VulcanBatchEngineTaskItemDelegate>,
+		 ServiceRegistration<PortletDataHandler>> _serviceRegistrations =
+			new ConcurrentHashMap<>();
 	private ServiceTracker
-		<VulcanBatchEngineTaskItemDelegate,
-		 ServiceRegistration<PortletDataHandler>> _serviceTracker;
+		<VulcanBatchEngineTaskItemDelegate, PortletDataHandler> _serviceTracker;
 
 	private class VulcanBatchEngineTaskItemDelegateServiceTrackerCustomizer
 		implements ServiceTrackerCustomizer
-			<VulcanBatchEngineTaskItemDelegate,
-			 ServiceRegistration<PortletDataHandler>> {
+			<VulcanBatchEngineTaskItemDelegate, PortletDataHandler> {
 
 		public VulcanBatchEngineTaskItemDelegateServiceTrackerCustomizer(
 			BundleContext bundleContext) {
@@ -88,7 +111,7 @@ public class VulcanBatchEnginePortletDataHandlerRegistry {
 		}
 
 		@Override
-		public ServiceRegistration<PortletDataHandler> addingService(
+		public PortletDataHandler addingService(
 			ServiceReference<VulcanBatchEngineTaskItemDelegate>
 				serviceReference) {
 
@@ -111,20 +134,25 @@ public class VulcanBatchEnginePortletDataHandlerRegistry {
 						(String)serviceReference.getProperty(
 							"batch.engine.task.item.delegate.name"));
 
-			return _bundleContext.registerService(
-				PortletDataHandler.class, vulcanBatchEnginePortletDataHandler,
-				HashMapDictionaryBuilder.<String, Object>put(
-					"javax.portlet.name", portletId
-				).build());
+			_serviceRegistrations.put(
+				serviceReference,
+				_bundleContext.registerService(
+					PortletDataHandler.class,
+					vulcanBatchEnginePortletDataHandler,
+					HashMapDictionaryBuilder.<String, Object>put(
+						"javax.portlet.name", portletId
+					).build()));
+
+			return vulcanBatchEnginePortletDataHandler;
 		}
 
 		@Override
 		public void modifiedService(
 			ServiceReference<VulcanBatchEngineTaskItemDelegate>
 				serviceReference,
-			ServiceRegistration<PortletDataHandler> serviceRegistration) {
+			PortletDataHandler portletDataHandler) {
 
-			removedService(serviceReference, serviceRegistration);
+			removedService(serviceReference, portletDataHandler);
 
 			addingService(serviceReference);
 		}
@@ -133,7 +161,10 @@ public class VulcanBatchEnginePortletDataHandlerRegistry {
 		public void removedService(
 			ServiceReference<VulcanBatchEngineTaskItemDelegate>
 				serviceReference,
-			ServiceRegistration<PortletDataHandler> serviceRegistration) {
+			PortletDataHandler portletDataHandler) {
+
+			ServiceRegistration<PortletDataHandler> serviceRegistration =
+				_serviceRegistrations.remove(serviceReference);
 
 			serviceRegistration.unregister();
 		}
