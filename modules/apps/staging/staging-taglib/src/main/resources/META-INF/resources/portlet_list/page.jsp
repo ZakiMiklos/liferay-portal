@@ -29,13 +29,15 @@
 			continue;
 		}
 
-		String portletDataHandlerName = portletDataHandler.getName();
+		Class<?> portletDataHandlerClass = portletDataHandler.getClass();
 
-		if (portletDataHandlerNames.contains(portletDataHandlerName)) {
+		String portletDataHandlerClassName = portletDataHandlerClass.getName();
+
+		if (portletDataHandlerClassNames.contains(portletDataHandlerClassName)) {
 			continue;
 		}
 
-		portletDataHandlerNames.add(portletDataHandlerName);
+		portletDataHandlerClassNames.add(portletDataHandlerClassName);
 
 		String portletTitle = PortalUtil.getPortletTitle(portlet, application, locale);
 
