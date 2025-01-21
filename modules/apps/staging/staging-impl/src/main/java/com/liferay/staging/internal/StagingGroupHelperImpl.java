@@ -180,7 +180,7 @@ public class StagingGroupHelperImpl implements StagingGroupHelper {
 			return false;
 		}
 
-		if (companyGroup.getGroupId() == group.getGroupId()) {
+		if (group.getGroupId() == companyGroup.getGroupId()) {
 			return true;
 		}
 
