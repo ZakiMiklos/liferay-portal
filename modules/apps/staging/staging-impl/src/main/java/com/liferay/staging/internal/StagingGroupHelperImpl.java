@@ -170,9 +170,11 @@ public class StagingGroupHelperImpl implements StagingGroupHelper {
 	public boolean isCompanyGroup(Group group) {
 		Group companyGroup = fetchCompanyGroup(group.getCompanyId());
 
-		if ((companyGroup != null) &&
-			(companyGroup.getGroupId() == group.getGroupId())) {
+		if (companyGroup == null) {
+			return false;
+		}
 
+		if (companyGroup.getGroupId() == group.getGroupId()) {
 			return true;
 		}
 
