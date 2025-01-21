@@ -462,7 +462,7 @@ public class ObjectDefinitionDeployerImpl implements ObjectDefinitionDeployer {
 				).build()),
 			FeatureFlagManagerUtil.registerService(
 				_bundleContext, "LPD-35914", Portlet.class,
-				enabled -> new ObjectEntriesPortlet(
+				lpd35914 -> new ObjectEntriesPortlet(
 					_objectActionLocalService,
 					objectDefinition.getObjectDefinitionId(),
 					_objectDefinitionLocalService,
@@ -470,7 +470,7 @@ public class ObjectDefinitionDeployerImpl implements ObjectDefinitionDeployer {
 					_objectFieldLocalService, _objectScopeProviderRegistry,
 					_objectViewLocalService, _portal,
 					portletResourcePermission),
-				enabled -> HashMapDictionaryBuilder.<String, Object>put(
+				lpd35914 -> HashMapDictionaryBuilder.<String, Object>put(
 					"com.liferay.portlet.company",
 					objectDefinition.getCompanyId()
 				).put(
@@ -486,7 +486,7 @@ public class ObjectDefinitionDeployerImpl implements ObjectDefinitionDeployer {
 					}
 				).put(
 					"com.liferay.portlet.preferences-unique-per-layout",
-					!enabled
+					!lpd35914
 				).put(
 					"javax.portlet.display-name",
 					objectDefinition.getPluralLabel(LocaleUtil.getSiteDefault())
