@@ -111,6 +111,7 @@ import com.liferay.object.web.internal.object.entries.portlet.action.UploadAttac
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.configuration.metatype.bnd.util.ConfigurableUtil;
 import com.liferay.portal.kernel.exception.PortalException;
+import com.liferay.portal.kernel.feature.flag.FeatureFlagManagerUtil;
 import com.liferay.portal.kernel.json.JSONObject;
 import com.liferay.portal.kernel.json.JSONUtil;
 import com.liferay.portal.kernel.language.Language;
@@ -462,7 +463,7 @@ public class ObjectDefinitionDeployerImpl implements ObjectDefinitionDeployer {
 				).build()),
 			FeatureFlagManagerUtil.registerService(
 				_bundleContext, "LPD-35914", Portlet.class,
-				lpd35914 -> new ObjectEntriesPortlet(
+				enabled -> new ObjectEntriesPortlet(
 					_objectActionLocalService,
 					objectDefinition.getObjectDefinitionId(),
 					_objectDefinitionLocalService,
@@ -470,7 +471,7 @@ public class ObjectDefinitionDeployerImpl implements ObjectDefinitionDeployer {
 					_objectFieldLocalService, _objectScopeProviderRegistry,
 					_objectViewLocalService, _portal,
 					portletResourcePermission),
-				lpd35914 -> HashMapDictionaryBuilder.<String, Object>put(
+				enabled -> HashMapDictionaryBuilder.<String, Object>put(
 					"com.liferay.portlet.company",
 					objectDefinition.getCompanyId()
 				).put(
@@ -486,7 +487,7 @@ public class ObjectDefinitionDeployerImpl implements ObjectDefinitionDeployer {
 					}
 				).put(
 					"com.liferay.portlet.preferences-unique-per-layout",
-					!lpd35914
+					!enabled
 				).put(
 					"javax.portlet.display-name",
 					objectDefinition.getPluralLabel(LocaleUtil.getSiteDefault())

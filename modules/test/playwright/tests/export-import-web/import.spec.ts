@@ -3,6 +3,10 @@
  * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
+import {
+	ObjectDefinitionApi,
+	ObjectField,
+} from '@liferay/object-admin-rest-client-js';
 import {Page, expect, mergeTests} from '@playwright/test';
 import fs from 'fs/promises';
 import * as path from 'path';
@@ -34,6 +38,7 @@ export const test = mergeTests(
 	documentLibraryPagesTest,
 	featureFlagsTest({
 		'LPD-35013': {enabled: true},
+		'LPD-35914': {enabled: true, system: true},
 	}),
 	productMenuPageTest,
 	exportImportPagesTest,
@@ -384,4 +389,57 @@ test('can export and import custom object entries at instance level', async ({
 			name: objectEntry.name,
 		})
 	);
+});
+
+test('cannot export site scoped custom object entries at instance level', async ({
+	apiHelpers,
+	applicationsMenuPage,
+	page,
+}) => {
+	const objectActionApiClient =
+		await apiHelpers.buildRestClient(ObjectDefinitionApi);
+
+	const {body: objectDefinition} =
+		await objectActionApiClient.postObjectDefinition({
+			active: true,
+			externalReferenceCode: 'test',
+			label: {
+				en_US: 'Test',
+			},
+			name: 'Test',
+			objectFields: [
+				{
+					DBType: ObjectField.DBTypeEnum.String,
+					businessType: ObjectField.BusinessTypeEnum.Text,
+					indexed: true,
+					indexedAsKeyword: true,
+					label: {
+						en_US: 'Name',
+					},
+					name: 'name',
+					required: true,
+				},
+			],
+			pluralLabel: {
+				en_US: 'Tests',
+			},
+			portlet: true,
+			scope: 'site',
+			status: {
+				code: 0,
+			},
+		});
+
+	apiHelpers.data.push({id: objectDefinition.id, type: 'objectDefinition'});
+
+	await apiHelpers.objectEntry.postObjectEntry(
+		{externalReferenceCode: '', name: 'test'},
+		'c/tests/scopes/Guest'
+	);
+
+	await applicationsMenuPage.goToExport();
+
+	await page.getByTestId('creationMenuNewButton').nth(1).click();
+
+	await expect(page.getByLabel('Tests 1 Items')).toBeHidden();
 });
