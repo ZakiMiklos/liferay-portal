@@ -98,7 +98,7 @@
 		<div class="form-group" id="stagingConfigurationControls">
 
 			<%
-			Set<String> portletDataHandlerNames = new HashSet<String>();
+			Set<String> portletDataHandlerClassNames = new HashSet<String>();
 
 			List<Portlet> dataSiteLevelPortlets = ExportImportHelperUtil.getDataSiteLevelPortlets(company.getCompanyId(), true);
 
@@ -111,10 +111,12 @@
 					continue;
 				}
 
-				String portletDataHandlerName = portletDataHandler.getName();
+				Class<?> portletDataHandlerClass = portletDataHandler.getClass();
 
-				if (!portletDataHandlerNames.contains(portletDataHandlerName)) {
-					portletDataHandlerNames.add(portletDataHandlerName);
+				String portletDataHandlerClassName = portletDataHandlerClass.getName();
+
+				if (!portletDataHandlerClassNames.contains(portletDataHandlerClassName)) {
+					portletDataHandlerClassNames.add(portletDataHandlerClassName);
 				}
 				else {
 					continue;
