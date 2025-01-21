@@ -3,10 +3,6 @@
  * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
-import {
-	ObjectDefinitionApi,
-	ObjectField,
-} from '@liferay/object-admin-rest-client-js';
 import {Page, expect, mergeTests} from '@playwright/test';
 import fs from 'fs/promises';
 import * as path from 'path';
@@ -38,7 +34,6 @@ export const test = mergeTests(
 	documentLibraryPagesTest,
 	featureFlagsTest({
 		'LPD-35013': {enabled: true},
-		'LPD-35914': {enabled: true, system: true},
 	}),
 	productMenuPageTest,
 	exportImportPagesTest,
