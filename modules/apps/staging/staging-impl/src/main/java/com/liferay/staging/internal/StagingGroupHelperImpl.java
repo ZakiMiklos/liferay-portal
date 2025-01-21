@@ -28,7 +28,6 @@ import com.liferay.portal.kernel.util.PortalClassLoaderUtil;
 import com.liferay.portal.kernel.util.UnicodeProperties;
 import com.liferay.portal.service.http.GroupServiceHttp;
 import com.liferay.staging.StagingGroupHelper;
-import com.liferay.staging.internal.constants.CompanyGroupConstants;
 
 import java.util.Collections;
 import java.util.List;

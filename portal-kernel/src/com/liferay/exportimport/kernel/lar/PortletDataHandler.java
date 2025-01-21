@@ -260,10 +260,6 @@ public interface PortletDataHandler {
 			PortletPreferences portletPreferences, String data)
 		throws PortletDataException;
 
-	public default boolean isCompany() {
-		return false;
-	}
-
 	public default boolean isConfigurationEnabled() {
 		return true;
 	}
