@@ -29,8 +29,6 @@ export class ApplicationsMenuPage {
 	private readonly countriesManagementItem: Locator;
 	private readonly customFieldsMenuItem: Locator;
 	private readonly dataMigrationCenterMenuItem: Locator;
-	private readonly exportMenuItem: Locator;
-	private readonly importMenuItem: Locator;
 	private readonly dataSetManagerMenuItem: Locator;
 	private readonly defaultPermissionsLink: Locator;
 	private readonly gogoShellItem: Locator;
@@ -146,14 +144,6 @@ export class ApplicationsMenuPage {
 		this.dataMigrationCenterMenuItem = page.getByRole('menuitem', {
 			exact: true,
 			name: 'Data Migration Center',
-		});
-		this.exportMenuItem = page.getByRole('menuitem', {
-			exact: true,
-			name: 'Export',
-		});
-		this.importMenuItem = page.getByRole('menuitem', {
-			exact: true,
-			name: 'Import',
 		});
 		this.dataSetManagerMenuItem = page.getByRole('menuitem', {
 			exact: true,
@@ -318,16 +308,6 @@ export class ApplicationsMenuPage {
 	async goToDataMigrationCenter() {
 		await this.goToApplicationsMenu();
 		await this.dataMigrationCenterMenuItem.click();
-	}
-
-	async goToExport() {
-		await this.goToApplicationsMenu();
-		await this.exportMenuItem.click();
-	}
-
-	async goToImport() {
-		await this.goToApplicationsMenu();
-		await this.importMenuItem.click();
 	}
 
 	async goToDefaultPermissions() {

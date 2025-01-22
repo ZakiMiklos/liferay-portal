@@ -29,19 +29,15 @@
 			continue;
 		}
 
-		StagingGroupHelper stagingGroupHelper = StagingGroupHelperUtil.getStagingGroupHelper();
+		Class<?> portletDataHandlerClass = portletDataHandler.getClass();
 
-		if (portletDataHandler.isCompany() != stagingGroupHelper.isCompanyGroup(group)) {
+		String portletDataHandlerClassName = portletDataHandlerClass.getName();
+
+		if (portletDataHandlerClassNames.contains(portletDataHandlerClassName)) {
 			continue;
 		}
 
-		String portletDataHandlerName = portletDataHandler.getName();
-
-		if (portletDataHandlerNames.contains(portletDataHandlerName)) {
-			continue;
-		}
-
-		portletDataHandlerNames.add(portletDataHandlerName);
+		portletDataHandlerClassNames.add(portletDataHandlerClassName);
 
 		String portletTitle = PortalUtil.getPortletTitle(portlet, application, locale);
 
