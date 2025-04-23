@@ -3,10 +3,11 @@
  * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
+import {checkFolderInZip} from '../../utils/zip';
 import {mergeTests} from '@playwright/test';
-import {createReadStream} from 'fs';
+import {createReadStream, readdirSync, statSync} from 'fs';
 import path from 'path';
-
+import { exportImportConfig } from './export_import.config';
 import {applicationsMenuPageTest} from '../../fixtures/applicationsMenuPageTest';
 import {dataApiHelpersTest} from '../../fixtures/dataApiHelpersTest';
 import {featureFlagsTest} from '../../fixtures/featureFlagsTest';
@@ -138,4 +139,57 @@ test('Non Modified Referred Content Cannot Publish To Live When Enable Include I
 	await page
 		.getByRole('button', {exact: true, name: 'Publish to Live'})
 		.click();
+
+	const { tomcatTempDir } = exportImportConfig.environment;
+
+	unzipAndCheckFolder(tomcatTempDir);
+
 });
+
+function getMostRecentLarFile(dir: string): string | null {
+	const files = readdirSync(dir)
+		.filter(file => file.endsWith('.lar'))
+		.map(file => ({
+			file,
+			time: statSync(path.join(dir, file)).mtime.getTime() // or use .ctime if preferred
+		}));
+
+	if (files.length === 0) return null;
+
+	files.sort((a, b) => b.time - a.time); // newest first
+
+	return path.join(dir, files[0].file);
+}
+
+const unzipAndCheckFolder = async (
+	tempDir: string,
+	folderName: string = 'adaptive-media'
+): Promise<void> => {
+	const files = readdirSync(tempDir)
+		.filter(file => file.endsWith('.lar'))
+		.map(file => ({
+			file,
+			time: statSync(path.join(tempDir, file)).mtime.getTime()
+		}));
+
+	if (files.length === 0) {
+		console.log('No LAR files found');
+		return;
+	}
+
+	// Sort files by most recent modification time
+	files.sort((a, b) => b.time - a.time);
+
+	const mostRecentFilePath = path.join(tempDir, files[0].file);
+
+	try {
+		const hasFolder = await checkFolderInZip(mostRecentFilePath, folderName);
+		console.log(
+			hasFolder
+				? `Folder "${folderName}" found in most recent LAR file: ${files[0].file}`
+				: `Folder "${folderName}" not found in most recent LAR file: ${files[0].file}`
+		);
+	} catch (error) {
+		console.error(`Error reading file ${files[0].file}: ${error}`);
+	}
+};
