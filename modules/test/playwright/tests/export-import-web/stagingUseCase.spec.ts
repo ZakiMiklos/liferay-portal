@@ -1,10 +1,10 @@
 /**
- * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-FileCopyrightText: (c) 2025 Liferay, Inc. https://liferay.com
  * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 import {checkFolderInZip} from '../../utils/zip';
-import {mergeTests} from '@playwright/test';
+import {mergeTests, expect} from '@playwright/test';
 import {createReadStream, readdirSync, statSync} from 'fs';
 const fs = require('fs');
 import path from 'path';
@@ -49,8 +49,8 @@ async function readPropertiesFile(filePath, property){
 test('Non Modified Referred Content Cannot Publish To Live When Enable Include If Modified Option',{tag: '@LPS-167777'}, async ({
 	apiHelpers,
 	stagingConfigurationPage,
-	stagingPage,
-	page
+	stagingPage
+
 }) => {
 	const site = await apiHelpers.headlessSite.createSite({
 		name: 'site-' + getRandomString(),
@@ -70,11 +70,6 @@ test('Non Modified Referred Content Cannot Publish To Live When Enable Include I
 		ddmStructureId: await getBasicWebContentStructureId(apiHelpers),
 		groupId: site.id,
 		titleMap: {en_US: getRandomString()},
-	});
-
-	apiHelpers.data.push({
-		id: `${site.id}_${webContent.articleId}`,
-		type: 'webContent',
 	});
 
 	await stagingPage.goto(site.name);
@@ -111,33 +106,20 @@ test('Non Modified Referred Content Cannot Publish To Live When Enable Include I
 		webContent
 	);
 
-	await stagingPage.goto(site.name + '-staging');await page.getByRole('link', { name: 'Custom Publish Process' }).click();
+	await stagingPage.goto(site.name + '-staging');
  
 	await stagingPage.publish(['Web Content 1 Items Web']);
 
-	await page.getByTestId('stagingType_local').check(); 
-	const l = liferayConfig;
-	let projectName = process.argv[2];
-
-	const portalSourceDir = path.resolve(__dirname, '..', '..', '..', '..', '..');
-	const bundlesDir = path.resolve(portalSourceDir, '..', 'bundles');
-
-	console.log("projectName: " + projectName + " portalSourceDir: " +portalSourceDir +" bundlesDir: " + bundlesDir);
-
-	await fs.readdir(bundlesDir, (err, files) => {
-		if (err) {
-			console.error('Error reading folder:', err);
-			return;
+	const bundlesDir = path.resolve(__dirname, '..', '..', '..', '..', '..', '..', 'liferay-portal', 'bundles');
+	
+	const files = await fs.readdirSync(bundlesDir);
+	let tomcatFolder: string;
+	for (const file of files){
+		if(file.startsWith('tomcat-')){
+			tomcatFolder = path.resolve(bundlesDir, file);
+			break;
 		}
-		
-		console.log('Folder contents:');
-		files.forEach(file => {
-			console.log(file);
-		});
-		});		
-	
-	await stagingPage.goto(site.name + '-staging');
-	
+	}
 
 
 	const { tomcatTempDir } = exportImportConfig.environment;
