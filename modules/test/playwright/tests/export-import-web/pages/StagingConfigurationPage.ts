@@ -5,7 +5,7 @@
 
 import {Page} from '@playwright/test';
 
-export class StagingConfigartionPage {
+export class StagingConfigurationPage {
 	readonly page: Page;
 
 	constructor(page: Page) {

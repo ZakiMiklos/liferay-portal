@@ -5,41 +5,49 @@
 
 import {mergeTests} from '@playwright/test';
 import {createReadStream} from 'fs';
+const fs = require('fs');
 import path from 'path';
 
 import {applicationsMenuPageTest} from '../../fixtures/applicationsMenuPageTest';
 import {dataApiHelpersTest} from '../../fixtures/dataApiHelpersTest';
 import {featureFlagsTest} from '../../fixtures/featureFlagsTest';
-import {loginTest} from '../../fixtures/loginTest';
-import {pageEditorPagesTest} from '../../fixtures/pageEditorPagesTest';
-import {productMenuPageTest} from '../../fixtures/productMenuPageTest';
-import {uiElementsPageTest} from '../../fixtures/uiElementsTest';
-import {webContentDisplayPageTest} from '../../fixtures/webContentDisplayPageTest';
-import getRandomString from '../../utils/getRandomString';
+import {loginTest} from '../../fixtures/loginTest';import getRandomString from '../../utils/getRandomString';
 import getBasicWebContentStructureId from '../../utils/structured-content/getBasicWebContentStructureId';
-import {stagingConfigartionPageTest} from '../export-import-web/fixtures/stagingConfigartionPageTest';
+import { stagingConfigurationPageTest} from '../export-import-web/fixtures/stagingConfigurationPageTest';
 import {stagingPageTest} from '../export-import-web/fixtures/stagingPageTest';
-import {companyExportImportPageTest} from './fixtures/companyExportImportPagesTest';
+import { liferayConfig } from '../../liferay.config';
 
 export const test = mergeTests(
 	applicationsMenuPageTest,
-	companyExportImportPageTest,
 	dataApiHelpersTest,
 	featureFlagsTest({
 		'LPD-35914': {enabled: true, system: true},
 	}),
 	loginTest(),
-	pageEditorPagesTest,
-	productMenuPageTest,
-	uiElementsPageTest,
 	stagingPageTest,
-	stagingConfigartionPageTest,
-	webContentDisplayPageTest
+	stagingConfigurationPageTest,
+	
 );
 
-test('Non Modified Referred Content Cannot Publish To Live When Enable Include If Modified Option', async ({
+async function readPropertiesFile(filePath, property){
+	const data = fs.readFileSync(filePath, 'utf-8');
+	let propertyValue = '';
+	data.split('\n').forEach((line) => {
+		line = line.trim();
+		if (line && !line.startsWith('#')) {
+			const [key, value] = line.split('=');
+			if (key && value && key === property) {
+				propertyValue = value.trim();
+			}
+		}
+	});
+
+	return propertyValue;
+}
+
+test('Non Modified Referred Content Cannot Publish To Live When Enable Include If Modified Option',{tag: '@LPS-167777'}, async ({
 	apiHelpers,
-	stagingConfigartionPage,
+	stagingConfigurationPage,
 	stagingPage,
 }) => {
 	const site = await apiHelpers.headlessSite.createSite({
@@ -92,8 +100,8 @@ test('Non Modified Referred Content Cannot Publish To Live When Enable Include I
 		webContent
 	);
 
-	await stagingConfigartionPage.goto(site.name);
-	await stagingConfigartionPage.disableTemporaryLARdeletion();
+	await stagingConfigurationPage.goto(site.name);
+	await stagingConfigurationPage.disableTemporaryLARdeletion();
 
 	webContent = await apiHelpers.jsonWebServicesJournal.editWebContent(
 		{title: getRandomString()},
@@ -103,4 +111,31 @@ test('Non Modified Referred Content Cannot Publish To Live When Enable Include I
 
 	await stagingPage.goto(site.name + '-staging');
 	await stagingPage.publish(['Web Content 1 Items Web']);
+	
+	
+	
+
+	const l = liferayConfig;
+	let projectName = process.argv[2];
+
+	const portalSourceDir = path.resolve(__dirname, '..', '..', '..', '..', '..');
+	const bundlesDir = path.resolve(portalSourceDir, '..', 'bundles');
+
+	console.log("projectName: " + projectName + " portalSourceDir: " +portalSourceDir +" bundlesDir: " + bundlesDir);
+
+	await fs.readdir(bundlesDir, (err, files) => {
+		if (err) {
+			console.error('Error reading folder:', err);
+			return;
+		}
+		
+		console.log('Folder contents:');
+		files.forEach(file => {
+			console.log(file);
+		});
+		});		
+	
+	await stagingPage.goto(site.name + '-staging');
+	
+
 });
