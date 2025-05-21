@@ -5194,7 +5194,9 @@ public class UserLocalServiceImpl extends UserLocalServiceBaseImpl {
 				userId, modelListenerException);
 		}
 
-		if (!silentUpdate) {
+		if (!silentUpdate &&
+			(user.getStatus() == WorkflowConstants.STATUS_APPROVED)) {
+
 			user.setPasswordModified(false);
 
 			sendPasswordNotification(

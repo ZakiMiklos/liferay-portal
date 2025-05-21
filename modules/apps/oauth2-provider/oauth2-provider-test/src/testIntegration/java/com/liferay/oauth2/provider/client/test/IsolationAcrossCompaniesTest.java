@@ -7,7 +7,9 @@ package com.liferay.oauth2.provider.client.test;
 
 import com.liferay.arquillian.extension.junit.bridge.junit.Arquillian;
 import com.liferay.oauth2.provider.internal.test.TestAnnotatedApplication;
+import com.liferay.petra.lang.SafeCloseable;
 import com.liferay.portal.kernel.model.Company;
+import com.liferay.portal.kernel.security.auth.CompanyThreadLocal;
 import com.liferay.portal.kernel.test.rule.AggregateTestRule;
 import com.liferay.portal.kernel.test.util.UserTestUtil;
 import com.liferay.portal.kernel.util.HashMapDictionaryBuilder;
@@ -90,7 +92,12 @@ public class IsolationAcrossCompaniesTest extends BaseClientTestCase {
 		}
 	}
 
-	public static class IsolationAccrossCompaniesTestPreparatorBundleActivator
+	@Override
+	protected BundleActivator getBundleActivator() {
+		return new IsolationAccrossCompaniesTestPreparatorBundleActivator();
+	}
+
+	private class IsolationAccrossCompaniesTestPreparatorBundleActivator
 		extends BaseTestPreparatorBundleActivator {
 
 		@Override
@@ -109,24 +116,29 @@ public class IsolationAcrossCompaniesTest extends BaseClientTestCase {
 
 			Company company1 = createCompany("host1");
 
-			createOAuth2Application(
-				company1.getCompanyId(),
-				UserTestUtil.getAdminUser(company1.getCompanyId()),
-				"oauthTestApplication");
+			try (SafeCloseable safeCloseable =
+					CompanyThreadLocal.setCompanyIdWithSafeCloseable(
+						company1.getCompanyId())) {
+
+				createOAuth2Application(
+					company1.getCompanyId(),
+					UserTestUtil.getAdminUser(company1.getCompanyId()),
+					"oauthTestApplication");
+			}
 
 			Company company2 = createCompany("host2");
 
-			createOAuth2Application(
-				company2.getCompanyId(),
-				UserTestUtil.getAdminUser(company2.getCompanyId()),
-				"oauthTestApplication");
+			try (SafeCloseable safeCloseable =
+					CompanyThreadLocal.setCompanyIdWithSafeCloseable(
+						company2.getCompanyId())) {
+
+				createOAuth2Application(
+					company2.getCompanyId(),
+					UserTestUtil.getAdminUser(company2.getCompanyId()),
+					"oauthTestApplication");
+			}
 		}
 
-	}
-
-	@Override
-	protected BundleActivator getBundleActivator() {
-		return new IsolationAccrossCompaniesTestPreparatorBundleActivator();
 	}
 
 }

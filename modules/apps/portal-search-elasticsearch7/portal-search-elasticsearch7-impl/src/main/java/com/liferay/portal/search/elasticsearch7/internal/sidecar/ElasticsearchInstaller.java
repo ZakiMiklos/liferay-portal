@@ -5,6 +5,7 @@
 
 package com.liferay.portal.search.elasticsearch7.internal.sidecar;
 
+import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.util.SystemProperties;
 
@@ -144,9 +145,37 @@ public class ElasticsearchInstaller {
 		PathUtil.deleteDir(_temporaryDirectoryPath);
 	}
 
+	private Path _download(Distributable distributable) throws IOException {
+		String downloadURLString = distributable.getDownloadURLString();
+
+		String fileName = StringUtils.substringAfterLast(
+			downloadURLString, StringPool.FORWARD_SLASH);
+
+		Path distributableFilePath = _distributablesDirectoryPath.resolve(
+			fileName);
+
+		if (Files.exists(distributableFilePath)) {
+			_validateChecksum(
+				getChecksum(distributableFilePath), distributable.getChecksum(),
+				fileName);
+
+			return distributableFilePath;
+		}
+
+		Path downloadedFilePath = _temporaryDirectoryPath.resolve(fileName);
+
+		PathUtil.download(new URL(downloadURLString), downloadedFilePath);
+
+		_validateChecksum(
+			getChecksum(downloadedFilePath), distributable.getChecksum(),
+			fileName);
+
+		return downloadedFilePath;
+	}
+
 	private void _downloadAndInstallElasticsearch() throws IOException {
 		String rootArchiveName = UncompressUtil.unarchive(
-			_getFilePath(_distribution.getElasticsearchDistributable()),
+			_download(_distribution.getElasticsearchDistributable()),
 			_temporaryDirectoryPath);
 
 		PathUtil.copyDirectory(
@@ -157,7 +186,7 @@ public class ElasticsearchInstaller {
 	private void _downloadAndInstallPlugin(Distributable distributable)
 		throws IOException {
 
-		Path filePath = _getFilePath(distributable);
+		Path filePath = _download(distributable);
 
 		String pluginName = StringUtils.substringBeforeLast(
 			String.valueOf(filePath.getFileName()), StringPool.DASH);
@@ -187,46 +216,20 @@ public class ElasticsearchInstaller {
 		}
 	}
 
-	private Path _getFilePath(Distributable distributable) throws IOException {
-		Path filePath = _locateOrDownload(distributable);
-
-		_guardChecksum(filePath, distributable.getChecksum());
-
-		return filePath;
-	}
-
-	private void _guardChecksum(Path filePath, String checksum)
-		throws IOException {
-
-		if (!checksum.equals(getChecksum(filePath))) {
-			throw new RuntimeException("Checksum mismatch");
-		}
-	}
-
 	private boolean _isAlreadyInstalled() {
 		return Files.exists(_installationDirectoryPath);
 	}
 
-	private Path _locateOrDownload(Distributable distributable)
+	private void _validateChecksum(
+			String checksum, String distributableChecksum, String fileName)
 		throws IOException {
 
-		String downloadURLString = distributable.getDownloadURLString();
-
-		String fileName = StringUtils.substringAfterLast(
-			downloadURLString, StringPool.FORWARD_SLASH);
-
-		Path distributableFilePath = _distributablesDirectoryPath.resolve(
-			fileName);
-
-		if (Files.exists(distributableFilePath)) {
-			return distributableFilePath;
+		if (!checksum.equals(distributableChecksum)) {
+			throw new RuntimeException(
+				StringBundler.concat(
+					"Checksum mismatch for ", fileName, StringPool.COLON,
+					StringPool.SPACE, checksum));
 		}
-
-		Path downloadedFilePath = _temporaryDirectoryPath.resolve(fileName);
-
-		PathUtil.download(new URL(downloadURLString), downloadedFilePath);
-
-		return downloadedFilePath;
 	}
 
 	private static final Path _temporaryDirectoryPath =

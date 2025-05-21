@@ -26,6 +26,7 @@ import com.liferay.portal.kernel.json.JSONFactoryUtil;
 import com.liferay.portal.kernel.json.JSONObject;
 import com.liferay.portal.kernel.model.Company;
 import com.liferay.portal.kernel.model.Group;
+import com.liferay.portal.kernel.model.GroupConstants;
 import com.liferay.portal.kernel.model.Organization;
 import com.liferay.portal.kernel.model.PasswordPolicy;
 import com.liferay.portal.kernel.model.Role;
@@ -58,6 +59,7 @@ import com.liferay.portal.kernel.service.TicketLocalService;
 import com.liferay.portal.kernel.service.UserGroupLocalService;
 import com.liferay.portal.kernel.service.UserLocalService;
 import com.liferay.portal.kernel.service.UserNotificationEventLocalService;
+import com.liferay.portal.kernel.service.WorkflowDefinitionLinkLocalService;
 import com.liferay.portal.kernel.test.AssertUtils;
 import com.liferay.portal.kernel.test.ReflectionTestUtil;
 import com.liferay.portal.kernel.test.randomizerbumpers.NumericStringRandomizerBumper;
@@ -78,6 +80,7 @@ import com.liferay.portal.kernel.transaction.Propagation;
 import com.liferay.portal.kernel.transaction.TransactionConfig;
 import com.liferay.portal.kernel.transaction.TransactionInvokerUtil;
 import com.liferay.portal.kernel.util.ArrayUtil;
+import com.liferay.portal.kernel.util.Constants;
 import com.liferay.portal.kernel.util.DateUtil;
 import com.liferay.portal.kernel.util.HashMapDictionaryBuilder;
 import com.liferay.portal.kernel.util.LinkedHashMapBuilder;
@@ -90,16 +93,20 @@ import com.liferay.portal.kernel.util.ProxyUtil;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.kernel.util.comparator.UserLastLoginDateComparator;
 import com.liferay.portal.kernel.workflow.WorkflowConstants;
+import com.liferay.portal.kernel.workflow.WorkflowTask;
+import com.liferay.portal.kernel.workflow.WorkflowTaskManager;
 import com.liferay.portal.model.impl.UserImpl;
 import com.liferay.portal.security.audit.AuditMessageProcessor;
 import com.liferay.portal.security.audit.event.generators.constants.EventTypes;
 import com.liferay.portal.security.ldap.test.util.configuration.LDAPAuthConfigurationProviderTemporarySwapper;
 import com.liferay.portal.service.impl.UserLocalServiceImpl;
 import com.liferay.portal.spring.aop.AopInvocationHandler;
+import com.liferay.portal.test.mail.MailServiceTestUtil;
 import com.liferay.portal.test.rule.FeatureFlag;
 import com.liferay.portal.test.rule.Inject;
 import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
 import com.liferay.portal.test.rule.PermissionCheckerMethodTestRule;
+import com.liferay.portal.test.rule.SynchronousMailTestRule;
 import com.liferay.portal.util.DigesterImpl;
 
 import java.sql.Connection;
@@ -139,7 +146,8 @@ public class UserLocalServiceTest {
 	public static final AggregateTestRule aggregateTestRule =
 		new AggregateTestRule(
 			new LiferayIntegrationTestRule(),
-			PermissionCheckerMethodTestRule.INSTANCE);
+			PermissionCheckerMethodTestRule.INSTANCE,
+			SynchronousMailTestRule.INSTANCE);
 
 	@BeforeClass
 	public static void setUpClass() throws Exception {
@@ -1360,6 +1368,77 @@ public class UserLocalServiceTest {
 	}
 
 	@Test
+	public void testUpdatePasswordDoesNotNotifyUnapprovedUser()
+		throws Exception {
+
+		_workflowDefinitionLinkLocalService.addWorkflowDefinitionLink(
+			TestPropsValues.getUserId(), TestPropsValues.getCompanyId(),
+			GroupConstants.DEFAULT_LIVE_GROUP_ID, User.class.getName(), 0, 0,
+			"Single Approver", 1);
+
+		User user = _userLocalService.addUserWithWorkflow(
+			0, TestPropsValues.getCompanyId(), false, "test", "test", false,
+			RandomTestUtil.randomString(),
+			RandomTestUtil.randomString() + "@liferay.com", LocaleUtil.US,
+			RandomTestUtil.randomString(), RandomTestUtil.randomString(),
+			RandomTestUtil.randomString(), 0, 0, true, 1, 1, 1970,
+			StringPool.BLANK, UserConstants.TYPE_REGULAR, null, null, null,
+			null, true,
+			ServiceContextTestUtil.getServiceContext(
+				TestPropsValues.getCompanyId(), TestPropsValues.getGroupId(),
+				TestPropsValues.getUserId()));
+
+		Assert.assertNotEquals(
+			WorkflowConstants.STATUS_APPROVED, user.getStatus());
+
+		_userLocalService.updatePassword(
+			user.getUserId(), "test2", "test2", false);
+
+		Assert.assertFalse(
+			MailServiceTestUtil.lastMailMessageContains(
+				"The request for a new password"));
+
+		for (WorkflowTask workflowTask :
+				_workflowTaskManager.getWorkflowTasks(
+					TestPropsValues.getCompanyId(), false, QueryUtil.ALL_POS,
+					QueryUtil.ALL_POS, null)) {
+
+			workflowTask = _workflowTaskManager.assignWorkflowTaskToUser(
+				TestPropsValues.getCompanyId(), TestPropsValues.getUserId(),
+				workflowTask.getWorkflowTaskId(), TestPropsValues.getUserId(),
+				StringPool.BLANK, null, null);
+
+			workflowTask = _workflowTaskManager.completeWorkflowTask(
+				user.getCompanyId(), TestPropsValues.getUserId(),
+				workflowTask.getWorkflowTaskId(), Constants.APPROVE,
+				StringPool.BLANK, null);
+
+			Assert.assertTrue(workflowTask.isCompleted());
+		}
+
+		user = _userLocalService.getUser(user.getUserId());
+
+		Assert.assertEquals(
+			WorkflowConstants.STATUS_APPROVED, user.getStatus());
+
+		ServiceContextThreadLocal.pushServiceContext(
+			ServiceContextTestUtil.getServiceContext(
+				user.getGroupId(), user.getUserId()));
+
+		try {
+			_userLocalService.updatePassword(
+				user.getUserId(), "newpassword", "newpassword", false);
+
+			Assert.assertTrue(
+				MailServiceTestUtil.lastMailMessageContains(
+					"The request for a new password"));
+		}
+		finally {
+			ServiceContextThreadLocal.popServiceContext();
+		}
+	}
+
+	@Test
 	public void testUpdatePasswordWithModifiedAlgorithm() throws Exception {
 		try (AutoCloseable autoCloseable =
 				ReflectionTestUtil.setFieldValueWithAutoCloseable(
@@ -1799,6 +1878,13 @@ public class UserLocalServiceTest {
 	@Inject
 	private UserNotificationEventLocalService
 		_userNotificationEventLocalService;
+
+	@Inject
+	private WorkflowDefinitionLinkLocalService
+		_workflowDefinitionLinkLocalService;
+
+	@Inject
+	private WorkflowTaskManager _workflowTaskManager;
 
 	private class TestAuditMessageProcessor implements AuditMessageProcessor {
 

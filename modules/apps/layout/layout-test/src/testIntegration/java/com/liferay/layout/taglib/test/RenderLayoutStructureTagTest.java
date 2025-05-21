@@ -555,9 +555,14 @@ public class RenderLayoutStructureTagTest {
 			Assert.assertTrue(
 				content, StringUtil.contains(content, value, StringPool.BLANK));
 		}
+
+		_objectDefinitionLocalService.deleteObjectDefinition(objectDefinition);
+		_objectDefinitionLocalService.deleteObjectDefinition(
+			relationshipObjectDefinition);
 	}
 
 	@Test
+	@TestInfo({"LPD-33573", "LPD-55091"})
 	public void testEnsureFileURLWhenChangingGroupFriendlyURL()
 		throws Exception {
 
@@ -578,6 +583,11 @@ public class RenderLayoutStructureTagTest {
 		long segmentExperienceId =
 			_segmentsExperienceLocalService.fetchDefaultSegmentsExperienceId(
 				draftLayout.getPlid());
+
+		ContentLayoutTestUtil.addItemToLayout(
+			"{}", LayoutDataItemTypeConstants.TYPE_CONTAINER,
+			layout.fetchDraftLayout(), _layoutStructureProvider,
+			segmentExperienceId);
 
 		ContentLayoutTestUtil.addItemToLayout(
 			JSONUtil.put(
@@ -604,6 +614,12 @@ public class RenderLayoutStructureTagTest {
 
 		Assert.assertTrue(
 			content, StringUtil.contains(content, url, StringPool.BLANK));
+		Assert.assertFalse(
+			content,
+			StringUtil.contains(content, "style=\"\"", StringPool.BLANK));
+		Assert.assertTrue(
+			content,
+			StringUtil.contains(content, "style=\"", StringPool.BLANK));
 
 		_groupLocalService.updateFriendlyURL(
 			_group.getGroupId(), "/new-friendly-url");

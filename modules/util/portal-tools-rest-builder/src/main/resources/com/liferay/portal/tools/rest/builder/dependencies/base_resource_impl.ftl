@@ -498,7 +498,11 @@ public abstract class Base${schemaName}ResourceImpl
 			<#elseif stringUtil.equals(javaMethodSignature.returnType, "void")>
 			<#elseif javaMethodSignature.returnType?contains("Page<")>
 				return Page.of(Collections.emptyList());
-			<#elseif freeMarkerTool.hasHTTPMethod(javaMethodSignature, "patch") && freeMarkerTool.hasJavaMethodSignature(javaMethodSignatures, "get" + javaMethodSignature.methodName?remove_beginning("patch")) && freeMarkerTool.hasJavaMethodSignature(javaMethodSignatures, "put" + javaMethodSignature.methodName?remove_beginning("patch")) && !javaMethodSignature.operation.requestBody.content?keys?seq_contains("multipart/form-data")>
+			<#elseif freeMarkerTool.hasHTTPMethod(javaMethodSignature, "patch") &&
+					 freeMarkerTool.hasJavaMethodSignature(javaMethodSignatures, "get" + javaMethodSignature.methodName?remove_beginning("patch")) &&
+					 freeMarkerTool.hasJavaMethodSignature(javaMethodSignatures, "put" + javaMethodSignature.methodName?remove_beginning("patch")) &&
+					 !freeMarkerTool.hasRequestBodyMediaType(javaMethodSignature, "multipart/form-data") &&
+					 !freeMarkerTool.hasRequestBodyMediaType(freeMarkerTool.getJavaMethodSignature(javaMethodSignatures, "put" + javaMethodSignature.methodName?remove_beginning("patch")), "multipart/form-data")>
 				<#assign
 					generatePatchMethods = true
 					getJavaMethodSignature = freeMarkerTool.getJavaMethodSignature(javaMethodSignatures, "get" + javaMethodSignature.methodName?remove_beginning("patch"))
@@ -1700,6 +1704,8 @@ public abstract class Base${schemaName}ResourceImpl
 							description = "${stringUtil.upperCaseFirstLetter(schemaName)}", format = "binary", type = "string"
 						)
 						public String ${schemaName};
+				   <#elseif stringUtil.equals(propertySchema.type, "array") && propertySchema.items.reference??>
+						public ${freeMarkerTool.getReferenceName(propertySchema.items.reference)}[] ${schemaName};
 					<#else>
 						public ${stringUtil.upperCaseFirstLetter(schemaName)} ${schemaName};
 					</#if>

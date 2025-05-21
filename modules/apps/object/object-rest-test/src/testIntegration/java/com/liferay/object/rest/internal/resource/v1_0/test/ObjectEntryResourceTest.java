@@ -292,19 +292,22 @@ public class ObjectEntryResourceTest {
 			_listTypeDefinition.getListTypeDefinitionId(),
 			_LIST_TYPE_ENTRY_KEY_1,
 			Collections.singletonMap(
-				LocaleUtil.US, RandomTestUtil.randomString()));
+				LocaleUtil.US, RandomTestUtil.randomString()),
+			_listTypeDefinition.isSystem());
 		_listTypeEntryLocalService.addListTypeEntry(
 			null, TestPropsValues.getUserId(),
 			_listTypeDefinition.getListTypeDefinitionId(),
 			_LIST_TYPE_ENTRY_KEY_2,
 			Collections.singletonMap(
-				LocaleUtil.US, RandomTestUtil.randomString()));
+				LocaleUtil.US, RandomTestUtil.randomString()),
+			_listTypeDefinition.isSystem());
 		_listTypeEntryLocalService.addListTypeEntry(
 			null, TestPropsValues.getUserId(),
 			_listTypeDefinition.getListTypeDefinitionId(),
 			_LIST_TYPE_ENTRY_KEY_3,
 			Collections.singletonMap(
-				LocaleUtil.US, RandomTestUtil.randomString()));
+				LocaleUtil.US, RandomTestUtil.randomString()),
+			_listTypeDefinition.isSystem());
 
 		String objectDefinitionName = ObjectDefinitionTestUtil.getRandomName();
 
@@ -7248,12 +7251,18 @@ public class ObjectEntryResourceTest {
 		JSONAssert.assertEquals(
 			JSONUtil.putAll(
 				JSONUtil.put(
+					"taxonomyCategoryExternalReferenceCode",
+					taxonomyCategory1.getExternalReferenceCode()
+				).put(
 					"taxonomyCategoryId",
 					Long.valueOf(taxonomyCategory1.getId())
 				).put(
 					"taxonomyCategoryName", taxonomyCategory1.getName()
 				),
 				JSONUtil.put(
+					"taxonomyCategoryExternalReferenceCode",
+					taxonomyCategory2.getExternalReferenceCode()
+				).put(
 					"taxonomyCategoryId",
 					Long.valueOf(taxonomyCategory2.getId())
 				).put(
@@ -7297,6 +7306,9 @@ public class ObjectEntryResourceTest {
 					"embeddedTaxonomyCategory",
 					_toEmbeddedTaxonomyCategoryJSONObject(taxonomyCategory1)
 				).put(
+					"taxonomyCategoryExternalReferenceCode",
+					taxonomyCategory1.getExternalReferenceCode()
+				).put(
 					"taxonomyCategoryId",
 					Long.valueOf(taxonomyCategory1.getId())
 				).put(
@@ -7305,6 +7317,9 @@ public class ObjectEntryResourceTest {
 				JSONUtil.put(
 					"embeddedTaxonomyCategory",
 					_toEmbeddedTaxonomyCategoryJSONObject(taxonomyCategory2)
+				).put(
+					"taxonomyCategoryExternalReferenceCode",
+					taxonomyCategory2.getExternalReferenceCode()
 				).put(
 					"taxonomyCategoryId",
 					Long.valueOf(taxonomyCategory2.getId())
@@ -7683,18 +7698,27 @@ public class ObjectEntryResourceTest {
 		JSONAssert.assertEquals(
 			JSONUtil.putAll(
 				JSONUtil.put(
+					"taxonomyCategoryExternalReferenceCode",
+					taxonomyCategory1.getExternalReferenceCode()
+				).put(
 					"taxonomyCategoryId",
 					Long.valueOf(taxonomyCategory1.getId())
 				).put(
 					"taxonomyCategoryName", taxonomyCategory1.getName()
 				),
 				JSONUtil.put(
+					"taxonomyCategoryExternalReferenceCode",
+					taxonomyCategory2.getExternalReferenceCode()
+				).put(
 					"taxonomyCategoryId",
 					Long.valueOf(taxonomyCategory2.getId())
 				).put(
 					"taxonomyCategoryName", taxonomyCategory2.getName()
 				),
 				JSONUtil.put(
+					"taxonomyCategoryExternalReferenceCode",
+					taxonomyCategory3.getExternalReferenceCode()
+				).put(
 					"taxonomyCategoryId",
 					Long.valueOf(taxonomyCategory3.getId())
 				).put(
@@ -9499,11 +9523,64 @@ public class ObjectEntryResourceTest {
 	public void testPutByExternalReferenceCodeManyToManyRelationshipWithSelf()
 		throws Exception {
 
+		String objectFieldValue1 = RandomTestUtil.randomString();
+		String objectFieldValue2 = RandomTestUtil.randomString();
+		String objectFieldValue3 = RandomTestUtil.randomString();
+
 		_objectRelationship1 = ObjectRelationshipTestUtil.addObjectRelationship(
 			_objectDefinition1, _objectDefinition1, TestPropsValues.getUserId(),
 			ObjectRelationshipConstants.TYPE_MANY_TO_MANY);
 
 		JSONObject jsonObject = HTTPTestUtil.invokeToJSONObject(
+			JSONUtil.put(
+				_OBJECT_FIELD_NAME_1, objectFieldValue1
+			).put(
+				_objectRelationship1.getName(),
+				JSONUtil.putAll(
+					JSONUtil.put(
+						_OBJECT_FIELD_NAME_1, objectFieldValue2
+					).put(
+						"externalReferenceCode", _ERC_VALUE_2
+					),
+					JSONUtil.put(
+						_OBJECT_FIELD_NAME_1, objectFieldValue3
+					).put(
+						"externalReferenceCode", _ERC_VALUE_3
+					))
+			).toString(),
+			StringBundler.concat(
+				_objectDefinition1.getRESTContextPath(),
+				"/by-external-reference-code/", _ERC_VALUE_1),
+			Http.Method.PUT);
+
+		JSONAssert.assertEquals(
+			JSONUtil.put(
+				"items",
+				JSONUtil.putAll(
+					JSONUtil.put(
+						_OBJECT_FIELD_NAME_1, objectFieldValue2
+					).put(
+						"externalReferenceCode", _ERC_VALUE_2
+					),
+					JSONUtil.put(
+						_OBJECT_FIELD_NAME_1, objectFieldValue3
+					).put(
+						"externalReferenceCode", _ERC_VALUE_3
+					))
+			).put(
+				"totalCount", 2
+			).toString(),
+			HTTPTestUtil.invokeToJSONObject(
+				null,
+				StringBundler.concat(
+					_objectDefinition1.getRESTContextPath(), StringPool.SLASH,
+					jsonObject.get("id"), StringPool.SLASH,
+					_objectRelationship1.getName()),
+				Http.Method.GET
+			).toString(),
+			JSONCompareMode.LENIENT);
+
+		HTTPTestUtil.invokeToJSONObject(
 			JSONUtil.put(
 				_OBJECT_FIELD_NAME_1, _NEW_OBJECT_FIELD_VALUE_1
 			).put(
@@ -9527,7 +9604,9 @@ public class ObjectEntryResourceTest {
 
 		JSONAssert.assertEquals(
 			JSONUtil.put(
-				"items",
+				_OBJECT_FIELD_NAME_1, _NEW_OBJECT_FIELD_VALUE_1
+			).put(
+				_objectRelationship1.getName(),
 				JSONUtil.putAll(
 					JSONUtil.put(
 						_OBJECT_FIELD_NAME_1, _NEW_OBJECT_FIELD_VALUE_2
@@ -9539,20 +9618,12 @@ public class ObjectEntryResourceTest {
 					).put(
 						"externalReferenceCode", _ERC_VALUE_3
 					))
-			).put(
-				"lastPage", 1
-			).put(
-				"page", 1
-			).put(
-				"pageSize", 20
-			).put(
-				"totalCount", 2
 			).toString(),
 			HTTPTestUtil.invokeToJSONObject(
 				null,
 				StringBundler.concat(
 					_objectDefinition1.getRESTContextPath(), StringPool.SLASH,
-					jsonObject.get("id"), StringPool.SLASH,
+					jsonObject.get("id"), "?nestedFields=",
 					_objectRelationship1.getName()),
 				Http.Method.GET
 			).toString(),
@@ -15390,7 +15461,7 @@ public class ObjectEntryResourceTest {
 			_toFileEntry(
 				customFileEntry2.getFileName(),
 				customFileEntry2.getFileEntryId()),
-			null, objectDefinition,
+			"thumbnailURL", objectDefinition,
 			_OBJECT_FIELD_NAME_ATTACHMENT_DOCS_AND_MEDIA_SOURCE);
 
 		// File from user computer

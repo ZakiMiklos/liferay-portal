@@ -1196,7 +1196,7 @@ test(
 		).toBeVisible();
 
 		await performLogout(page);
-		await performLoginViaApi(page, user.alternateName);
+		await performLoginViaApi({page, screenName: user.alternateName});
 
 		await page.goto(
 			liferayConfig.environment.baseUrl +
@@ -1315,7 +1315,7 @@ test(
 		await displayPageTemplatesPage.publishTemplate();
 
 		await performLogout(page);
-		await performLoginViaApi(page, 'demo.unprivileged');
+		await performLoginViaApi({page, screenName: 'demo.unprivileged'});
 
 		const cart1 = await apiHelpers.headlessCommerceDeliveryCart.postCart(
 			{
@@ -1381,7 +1381,7 @@ test(
 		await commerceLayoutsPage.expectOrderActionButtons({reorderCount: 1});
 
 		await performLogout(page);
-		await performLoginViaApi(page, 'test');
+		await performLoginViaApi({page, screenName: 'test'});
 
 		await commerceAdminChannelsPage.changeCommerceChannelBuyerOrderApprovalWorkflow(
 			'Single Approver (Version 1)',
@@ -1394,7 +1394,7 @@ test(
 		);
 
 		await performLogout(page);
-		await performLoginViaApi(page, 'demo.unprivileged');
+		await performLoginViaApi({page, screenName: 'demo.unprivileged'});
 
 		const cart2 = await apiHelpers.headlessCommerceDeliveryCart.postCart(
 			{
@@ -1428,7 +1428,7 @@ test(
 		await commerceLayoutsPage.expectOrderActionButtons({});
 
 		await performLogout(page);
-		await performLoginViaApi(page, 'test');
+		await performLoginViaApi({page, screenName: 'test'});
 
 		await page.goto(
 			liferayConfig.environment.baseUrl +
@@ -1452,7 +1452,7 @@ test(
 		await commerceLayoutsPage.expectOrderActionButtons({checkoutCount: 1});
 
 		await performLogout(page);
-		await performLoginViaApi(page, 'demo.unprivileged');
+		await performLoginViaApi({page, screenName: 'demo.unprivileged'});
 
 		await page.goto(
 			liferayConfig.environment.baseUrl +
@@ -1485,7 +1485,7 @@ test(
 		);
 
 		await performLogout(page);
-		await performLoginViaApi(page, 'test');
+		await performLoginViaApi({page, screenName: 'test'});
 
 		await page.goto(
 			liferayConfig.environment.baseUrl +
@@ -1914,10 +1914,11 @@ test(
 
 test(
 	'Order Data Sets and header fragments',
-	{tag: '@LPD-35558'},
+	{tag: ['@LPD-35558', '@LPD-48375']},
 	async ({
 		apiHelpers,
 		commerceLayoutsPage,
+		commerceThemeClassicOrdersPage,
 		displayPageTemplatesPage,
 		page,
 		pageEditorPage,
@@ -1939,9 +1940,7 @@ test(
 			await apiHelpers.headlessCommerceAdminCatalog.postCatalog();
 
 		await displayPageTemplatesPage.goto(site.friendlyUrlPath);
-
 		const displayPageTemplateName = getRandomString();
-
 		await displayPageTemplatesPage.createTemplate({
 			contentType: 'Order',
 			name: displayPageTemplateName,
@@ -2004,9 +2003,61 @@ test(
 		);
 
 		await expect(
-			page.getByRole('link', {name: cart.id.toString()})
+			(await commerceThemeClassicOrdersPage.tableRow(1, cart.id)).row
 		).toBeVisible();
-		await expect(page.getByText(sku.sku.toString())).toBeVisible();
+		await expect(
+			(
+				await commerceThemeClassicOrdersPage.orderItemsTableRow(
+					2,
+					sku.sku
+				)
+			).row
+		).toBeVisible();
+
+		const cart2 = await apiHelpers.headlessCommerceDeliveryCart.postCart(
+			{
+				accountId: account.id,
+				cartItems: [],
+			},
+			channel.id
+		);
+
+		await apiHelpers.headlessCommerceDeliveryCart.postCart(
+			{
+				accountId: account.id,
+				cartItems: [],
+			},
+			channel.id
+		);
+
+		page.on('dialog', async (dialog) => {
+			await dialog.accept();
+		});
+
+		await (await commerceThemeClassicOrdersPage.tableRow(11, 'Actions')).row
+			.getByRole('button')
+			.click();
+		await commerceThemeClassicOrdersPage
+			.orderTableMenuItem('Delete')
+			.click();
+
+		await waitForAlert(page);
+
+		await expect(
+			page.getByRole('link', {name: cart.id.toString()})
+		).not.toBeVisible();
+
+		await commerceThemeClassicOrdersPage.orderTableItemsSelector.click();
+		await commerceThemeClassicOrdersPage.orderTableItemsSelectorDropdown.click();
+		await commerceThemeClassicOrdersPage
+			.orderTableMenuItem('Delete')
+			.click();
+
+		await waitForAlert(page);
+
+		await expect(
+			page.getByRole('link', {name: cart2.id.toString()})
+		).not.toBeVisible();
 	}
 );
 

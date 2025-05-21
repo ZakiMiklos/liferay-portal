@@ -170,7 +170,6 @@ components:
                         The categories associated with this object entry.
                     items:
                         $ref: "#/components/schemas/TaxonomyCategoryBrief"
-                    readOnly: true
                     type: array
                 taxonomyCategoryIds:
                     # @review
@@ -215,6 +214,36 @@ components:
                         Optional field with the embedded taxonomy category, can be embedded with nestedFields
                     readOnly: true
                     type: object
+                parentTaxonomyCategory:
+                    description:
+                        The category's parent category.
+                    properties:
+                        externalReferenceCode:
+                            # @review
+                            description:
+                                The parent taxonomy category's external reference code.
+                            type: string
+                    type: object
+                    writeOnly: true
+                parentTaxonomyVocabulary:
+                    description:
+                        The parent category's `TaxonomyVocabulary`.
+                    properties:
+                        externalReferenceCode:
+                            # @review
+                            description:
+                                The parent category's `TaxonomyVocabulary` external reference code.
+                            type: string
+                    type: object
+                    writeOnly: true
+                scope:
+                    $ref: "#/components/schemas/Scope"
+                taxonomyCategoryExternalReferenceCode:
+                    # @review
+                    description:
+                        The category's external reference code.
+                    type:
+                        string
                 taxonomyCategoryId:
                     description:
                         The category's ID. This can be used to retrieve more information in the `TaxonomyCategory` API.

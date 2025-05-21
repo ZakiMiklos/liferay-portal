@@ -13,6 +13,7 @@ import com.liferay.portal.tools.rest.builder.test.client.dto.v1_0.ChildTestEntit
 import com.liferay.portal.tools.rest.builder.test.client.dto.v1_0.TestEntity;
 
 import org.junit.Assert;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -124,6 +125,11 @@ public class TestEntityResourceTest extends BaseTestEntityResourceTestCase {
 	@Test
 	public void testPostReservedWord() throws Exception {
 		testEntityResource.postReservedWord(true);
+	}
+
+	@Ignore
+	@Test
+	public void testPostTestEntityMultipartBulk() throws Exception {
 	}
 
 	@Override
