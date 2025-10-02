@@ -754,37 +754,6 @@ public class ObjectEntryResourceTest {
 			ObjectDefinitionConstants.SCOPE_COMPANY,
 			TestPropsValues.getUserId());
 
-		_objectDefinition5 = ObjectDefinitionTestUtil.publishObjectDefinition(
-			ObjectDefinitionTestUtil.getRandomName(),
-			Arrays.asList(
-				ObjectFieldUtil.createObjectField(
-					ObjectFieldConstants.BUSINESS_TYPE_ATTACHMENT,
-					ObjectFieldConstants.DB_TYPE_LONG, true, false, null,
-					_OBJECT_FIELD_NAME_LARGE_ATTACHMENT_USER_COMPUTER_SOURCE,
-					_OBJECT_FIELD_NAME_LARGE_ATTACHMENT_USER_COMPUTER_SOURCE,
-					Arrays.asList(
-						new ObjectFieldSettingBuilder(
-						).name(
-							ObjectFieldSettingConstants.
-								NAME_ACCEPTED_FILE_EXTENSIONS
-						).value(
-							"txt"
-						).build(),
-						new ObjectFieldSettingBuilder(
-						).name(
-							ObjectFieldSettingConstants.NAME_FILE_SOURCE
-						).value(
-							ObjectFieldSettingConstants.VALUE_USER_COMPUTER
-						).build(),
-						new ObjectFieldSettingBuilder(
-						).name(
-							ObjectFieldSettingConstants.NAME_MAX_FILE_SIZE
-						).value(
-							String.valueOf(_MAX_LARGE_FILE_SIZE_VALUE)
-						).build()),
-					false)),
-			ObjectDefinitionConstants.SCOPE_COMPANY);
-
 		_objectEntry5 = ObjectEntryTestUtil.addObjectEntry(
 			_objectDefinition4,
 			HashMapBuilder.<String, Serializable>put(
@@ -1076,8 +1045,6 @@ public class ObjectEntryResourceTest {
 			_objectDefinition3);
 		_objectDefinitionLocalService.deleteObjectDefinition(
 			_objectDefinition4);
-		_objectDefinitionLocalService.deleteObjectDefinition(
-			_objectDefinition5);
 		_objectDefinitionLocalService.deleteObjectDefinition(
 			_siteScopedObjectDefinition1);
 		_objectDefinitionLocalService.deleteObjectDefinition(
@@ -9310,16 +9277,48 @@ public class ObjectEntryResourceTest {
 	public void testPostCustomObjectEntryWithLargeAttachmentObjectField()
 		throws Exception {
 
+		String attachmentFieldName = "x" + RandomTestUtil.randomString();
+
+		ObjectField objectField = ObjectFieldUtil.createObjectField(
+			ObjectFieldConstants.BUSINESS_TYPE_ATTACHMENT,
+			ObjectFieldConstants.DB_TYPE_LONG, true, false, null,
+			attachmentFieldName, attachmentFieldName,
+			Arrays.asList(
+				new ObjectFieldSettingBuilder(
+				).name(
+					ObjectFieldSettingConstants.NAME_ACCEPTED_FILE_EXTENSIONS
+				).value(
+					"txt"
+				).build(),
+				new ObjectFieldSettingBuilder(
+				).name(
+					ObjectFieldSettingConstants.NAME_FILE_SOURCE
+				).value(
+					ObjectFieldSettingConstants.VALUE_USER_COMPUTER
+				).build(),
+				new ObjectFieldSettingBuilder(
+				).name(
+					ObjectFieldSettingConstants.NAME_MAX_FILE_SIZE
+				).value(
+					String.valueOf(100)
+				).build()),
+			false);
+
+		objectField.setObjectDefinitionId(
+			_objectDefinition1.getObjectDefinitionId());
+
+		ObjectFieldTestUtil.addCustomObjectField(
+			TestPropsValues.getUserId(), objectField);
+
 		byte[] data = new byte[50000000];
 
-		new Random(
-		).nextBytes(
-			new byte[50000000]
-		);
+		Random random = new Random();
+
+		random.nextBytes(data);
 
 		JSONObject jsonObject = HTTPTestUtil.invokeToJSONObject(
 			JSONUtil.put(
-				_OBJECT_FIELD_NAME_LARGE_ATTACHMENT_USER_COMPUTER_SOURCE,
+				attachmentFieldName,
 				JSONUtil.put(
 					"fileBase64",
 					java.util.Base64.getEncoder(
@@ -9330,14 +9329,12 @@ public class ObjectEntryResourceTest {
 					"name", StringUtil.randomString() + ".txt"
 				)
 			).toString(),
-			_objectDefinition5.getRESTContextPath(), Http.Method.POST);
+			_objectDefinition1.getRESTContextPath(), Http.Method.POST);
 
 		_assertAttachmentJSONObject(
 			_dlFileEntryLocalService.getDLFileEntry(
 				_testDLFileEntryModelListener.getLastFileEntryId()),
-			null,
-			jsonObject.getJSONObject(
-				_OBJECT_FIELD_NAME_LARGE_ATTACHMENT_USER_COMPUTER_SOURCE),
+			null, jsonObject.getJSONObject(attachmentFieldName),
 			JSONUtil.put(
 				"externalReferenceCode", "L_GLOBAL"
 			).put(
@@ -19514,8 +19511,6 @@ public class ObjectEntryResourceTest {
 
 	private static final int _MAX_FILE_SIZE_VALUE = 1;
 
-	private static final int _MAX_LARGE_FILE_SIZE_VALUE = 100;
-
 	private static final String _NEW_OBJECT_FIELD_VALUE_1 =
 		RandomTestUtil.randomString();
 
@@ -19563,10 +19558,6 @@ public class ObjectEntryResourceTest {
 
 	private static final String _OBJECT_FIELD_NAME_INTEGER =
 		"x" + RandomTestUtil.randomString();
-
-	private static final String
-		_OBJECT_FIELD_NAME_LARGE_ATTACHMENT_USER_COMPUTER_SOURCE =
-			"x" + RandomTestUtil.randomString();
 
 	private static final String _OBJECT_FIELD_NAME_LOCALIZED_LONG_TEXT =
 		"x" + RandomTestUtil.randomString();
@@ -19687,7 +19678,6 @@ public class ObjectEntryResourceTest {
 	private ObjectDefinition _objectDefinition2;
 	private ObjectDefinition _objectDefinition3;
 	private ObjectDefinition _objectDefinition4;
-	private ObjectDefinition _objectDefinition5;
 
 	@Inject
 	private ObjectDefinitionLocalService _objectDefinitionLocalService;
