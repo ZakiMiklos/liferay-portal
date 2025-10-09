@@ -9,6 +9,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonFactoryBuilder;
 import com.fasterxml.jackson.core.StreamReadConstraints;
+import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.MapperFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
@@ -76,6 +77,8 @@ public class ObjectMapperProviderUtil {
 			_getJsonFactory(_jsonStringMaxLength)) {
 
 			{
+				configure(
+					DeserializationFeature.USE_JAVA_ARRAY_FOR_JSON_ARRAY, true);
 				configure(MapperFeature.SORT_PROPERTIES_ALPHABETICALLY, true);
 				enable(SerializationFeature.INDENT_OUTPUT);
 				registerModule(
