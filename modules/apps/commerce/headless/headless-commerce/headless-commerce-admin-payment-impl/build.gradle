@@ -17,7 +17,7 @@ dependencies {
 	compileOnly project(":apps:commerce:commerce-payment-api")
 	compileOnly project(":apps:commerce:headless:headless-commerce-core-api")
 	compileOnly project(":apps:commerce:headless:headless-commerce:headless-commerce-admin-payment-api")
-	compileOnly project(":apps:headless:headless-common-spi")
+	compileOnly project(":apps:headless:headless-common:headless-common-spi")
 	compileOnly project(":apps:portal-odata:portal-odata-api")
 	compileOnly project(":apps:portal-search:portal-search-api")
 	compileOnly project(":apps:portal-vulcan:portal-vulcan-api")
